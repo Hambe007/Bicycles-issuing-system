@@ -6,8 +6,153 @@
 </head>
 <body>
     <!-- This is your index.html file -->
-    [Previous HTML code goes here]
-</body>
+        .header {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .departure-notice {
+        background-color: #ffe6e6;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #ffcccc;
+        border-radius: 8px;
+    }
+
+    .departure-item {
+        background-color: white;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+        border: 1px solid #ffcccc;
+    }
+
+    .search-section {
+        background-color: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .search-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .form-section {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    button {
+        padding: 8px 15px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+    .print-btn {
+        background-color: #2196F3;
+    }
+
+    .edit-btn {
+        background-color: #ff9800;
+    }
+
+    .delete-btn {
+        background-color: #f44336;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .highlight {
+        background-color: #fff3cd;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        body {
+            padding: 0;
+            background: white;
+        }
+
+        table {
+            box-shadow: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-group {
+            flex-direction: column;
+        }
+        
+        button {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
+</style></body>
 </html>
 
 <!-- Create a new file named netlify.toml with this content -->
