@@ -118,7 +118,73 @@
         <h1>Hotel Bicycle Issuing System</h1>
     </div>
 
-    <!-- Rest of your HTML structure remains the same until the script section -->
+   <div id="todayDepartures" class="departure-notice" style="display: none;">
+    <h3>Today's Departures:</h3>
+    <div id="departuresList"></div>
+</div>
+
+<div class="search-section no-print">
+    <div class="search-group">
+        <input type="text" id="bicycleSearch" placeholder="Search by Bicycle Number...">
+        <button onclick="searchByBicycle()">Search Bicycle</button>
+    </div>
+    <div class="search-group">
+        <input type="text" id="roomSearch" placeholder="Search by Room Number...">
+        <button onclick="searchByRoom()">Search Room</button>
+    </div>
+    <div class="search-group">
+        <button onclick="resetSearch()">Reset Search</button>
+        <button class="print-btn" onclick="window.print()">Print Records</button>
+    </div>
+</div>
+
+<form id="bicycleForm" class="form-section no-print">
+    <h2>Issue Bicycle</h2>
+    <input type="hidden" id="editIndex">
+    
+    <div class="form-grid">
+        <div>
+            <label for="roomNumber">Room Number:</label>
+            <input type="text" id="roomNumber" required>
+        </div>
+        
+        <div>
+            <label for="guestName">Guest Name:</label>
+            <input type="text" id="guestName" required>
+        </div>
+        
+        <div>
+            <label for="issueDate">Date of Issue:</label>
+            <input type="date" id="issueDate" required>
+        </div>
+        
+        <div>
+            <label for="departureDate">Date of Departure:</label>
+            <input type="date" id="departureDate" required>
+        </div>
+        
+        <div>
+            <label for="bicycleNumber">Bicycle Number:</label>
+            <input type="text" id="bicycleNumber" required>
+        </div>
+    </div>
+    
+    <button type="submit" style="margin-top: 15px;">Save Record</button>
+</form>
+
+<table id="recordsTable">
+    <thead>
+        <tr>
+            <th>Room Number</th>
+            <th>Guest Name</th>
+            <th>Issue Date</th>
+            <th>Departure Date</th>
+            <th>Bicycle Number</th>
+            <th class="no-print">Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
 
     <script>
         const firebaseConfig = {
@@ -128,6 +194,61 @@
   storageBucket: "bicycle-issuing-system2.firebasestorage.app",
   messagingSenderId: "64926990610",
   appId: "1:64926990610:web:f45390888ea1d0dfb5f3cb"
+
+            // Format date function
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+// Check departures function
+function checkDepartures() {
+    const today = new Date().toISOString().split('T')[0];
+    const departingToday = records.filter(record => record.departureDate === today);
+    const departuresDiv = document.getElementById('todayDepartures');
+    const departuresList = document.getElementById('departuresList');
+
+    if (departingToday.length > 0) {
+        departuresDiv.style.display = 'block';
+        departuresList.innerHTML = departingToday.map(record => `
+            <div class="departure-item">
+                Room ${record.roomNumber} - ${record.guestName} (Bicycle #${record.bicycleNumber})
+            </div>
+        `).join('');
+    } else {
+        departuresDiv.style.display = 'none';
+    }
+}
+
+// Search functions
+function searchByBicycle() {
+    const searchTerm = document.getElementById('bicycleSearch').value.toLowerCase();
+    if (!searchTerm) {
+        alert('Please enter a bicycle number');
+        return;
+    }
+    const filtered = records.filter(record => 
+        record.bicycleNumber.toLowerCase().includes(searchTerm)
+    );
+    displayRecords(filtered);
+}
+
+function searchByRoom() {
+    const searchTerm = document.getElementById('roomSearch').value.toLowerCase();
+    if (!searchTerm) {
+        alert('Please enter a room number');
+        return;
+    }
+    const filtered = records.filter(record => 
+        record.roomNumber.toLowerCase().includes(searchTerm)
+    );
+    displayRecords(filtered);
+}
+
+function resetSearch() {
+    document.getElementById('bicycleSearch').value = '';
+    document.getElementById('roomSearch').value = '';
+    displayRecords();
+}
 };
 
         // Initialize Firebase
