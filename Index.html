@@ -23,6 +23,7 @@
             <button class="tab-button" onclick="showTab('inventory')">Bicycle Inventory</button>
         </div>
     </div>
+
     <style>
         /* Base Styles */
         body {
@@ -35,7 +36,6 @@
             background-color: #f5f6fa;
         }
 
-        /* Header */
         .header {
             background-color: white;
             padding: 20px;
@@ -45,7 +45,6 @@
             text-align: center;
         }
 
-        /* Tab System */
         .tab-container {
             margin-bottom: 20px;
         }
@@ -78,96 +77,6 @@
             display: block;
         }
 
-        /* Form Styles */
-        .form-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .search-section {
-            background-color: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .search-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        /* Input Styles */
-        input[type="text"],
-        input[type="date"],
-        input[type="number"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        /* Button Styles */
-        button {
-            padding: 8px 15px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: opacity 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .print-btn { background-color: #2196F3; }
-        .edit-btn { background-color: #ff9800; }
-        .delete-btn { background-color: #f44336; }
-        .return-btn { background-color: #4CAF50; }
-        .assign-btn { background-color: #9c27b0; }
-
-        /* Table Styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: 500;
-        }
-
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-
         /* Notification */
         .notification {
             position: fixed;
@@ -182,7 +91,6 @@
             z-index: 1000;
         }
 
-        /* Print Styles */
         @media print {
             .no-print {
                 display: none !important;
@@ -192,89 +100,27 @@
                 padding: 0;
                 background: white;
             }
-
-            table {
-                box-shadow: none;
-            }
-
-            .header {
-                box-shadow: none;
-            }
         }
     </style>
 
     <!-- Tab Contents -->
-    <!-- Bicycle Issuing Tab -->
     <div id="issuingTab" class="tab-content active">
-        <div class="search-section no-print">
-            <div class="search-group">
-                <input type="text" id="bicycleSearch" placeholder="Search by Bicycle Number...">
-                <button onclick="searchByBicycle()">Search Bicycle</button>
-            </div>
-            <div class="search-group">
-                <input type="text" id="roomSearch" placeholder="Search by Room Number...">
-                <button onclick="searchByRoom()">Search Room</button>
-            </div>
-            <div class="search-group">
-                <button onclick="resetSearch()">Reset Search</button>
-                <button class="print-btn" onclick="printDepartures()">Print Today's Departures</button>
-                <button class="print-btn" onclick="printRecords()">Print Records</button>
-            </div>
-        </div>
-
-        <form id="bicycleForm" class="form-section no-print">
-            <h2>Issue Bicycle</h2>
-            <input type="hidden" id="editIndex">
-
-            <div class="form-grid">
-                <div>
-                    <label for="roomNumber">Room Number:</label>
-                    <input type="text" id="roomNumber" required>
-                </div>
-
-                <div>
-                    <label for="guestName">Guest Name:</label>
-                    <input type="text" id="guestName" required>
-                </div>
-
-                <div>
-                    <label for="issueDate">Date of Issue:</label>
-                    <input type="date" id="issueDate" required>
-                </div>
-
-                <div>
-                    <label for="departureDate">Date of Departure:</label>
-                    <input type="date" id="departureDate" required>
-                </div>
-
-                <div>
-                    <label for="bicycleNumber">Bicycle Number:</label>
-                    <input type="text" id="bicycleNumber" required
-                           pattern="^(K-\d{2}|[1-9]\d{0,2})$"
-                           title="Enter valid bicycle number (1-400 or K-01 to K-99)">
-                </div>
-            </div>
-
-            <button type="submit">Save Record</button>
-        </form>
-
-        <table id="recordsTable">
-            <thead>
-                <tr>
-                    <th>Room Number</th>
-                    <th>Guest Name</th>
-                    <th>Issue Date</th>
-                    <th>Departure Date</th>
-                    <th>Bicycle Number</th>
-                    <th>Status</th>
-                    <th class="no-print">Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <h2>Bicycle Issuing</h2>
+        <!-- Add content related to the Issuing tab -->
+    </div>
+    <div id="faultyTab" class="tab-content">
+        <h2>Faulty Bicycles</h2>
+        <!-- Add content related to the Faulty Bicycles tab -->
+    </div>
+    <div id="arrivalTab" class="tab-content">
+        <h2>Arrival Preparation</h2>
+        <!-- Add content related to the Arrival Preparation tab -->
+    </div>
+    <div id="inventoryTab" class="tab-content">
+        <h2>Bicycle Inventory</h2>
+        <!-- Add content related to the Bicycle Inventory tab -->
     </div>
 
-    <!-- Notification div -->
     <div id="notification" class="notification"></div>
 
     <script>
@@ -292,9 +138,64 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Global variables
-        let records = [];
+        // Tab Management Function
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            document.querySelector(button[onclick="showTab('${tabName}')"]).classList.add('active');
+        }
 
-        // Utility Functions
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString();
+        // Print Function Template
+        function printSection(contentId, title) {
+            const printContent = document.getElementById(contentId).innerHTML;
+            const printWindow = window.open('', '', 'width=800, height=600');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #4CAF50;
+                            color: white;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.onafterprint = function() { window.close(); };
+                        };
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // Sample print function call (adjust according to your needs)
+        function printIssuingTab() {
+            printSection('issuingTab', 'Bicycle Issuing Report');
+        }
+    </script>
+</body>
+</html>
