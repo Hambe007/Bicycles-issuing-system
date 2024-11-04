@@ -97,7 +97,10 @@
         margin: 0 auto;
         padding: 15px;
     }
-
+.active-record { background-color: #fff; }
+.faulty-record { background-color: #fff3e0; }
+.status-active { background-color: #e8f5e9; color: #2e7d32; }
+.status-faulty { background-color: #ffebee; color: #d32f2f; }
     /* Enhanced Header */
     .header {
         background-color: white;
@@ -679,8 +682,154 @@ function validateBicycleNumber(number) {
 
 function validateRoomNumber(room) {
     return /^\d{2,4}$/.test(room);
+}async function checkBicycleAvailability(bicycleNumber) {
+    try {
+        const doc = await db.collection('bicycleInventory').doc(bicycleNumber).get();
+        if (!doc.exists) {
+            return false;
+        }
+        const bike = doc.data();
+        return bike.status === 'Available';
+    } catch (error) {
+        console.error('Error checking bicycle availability:', error);
+        return false;
+    }
+}
+async function createBicycleRecord(record) {
+    const bicycleRef = db.collection('bicycleInventory').doc(record.bicycleNumber);
+    const recordRef = db.collection('bicycleRecords').doc();
+
+    const batch = db.batch();
+    
+    // Update bicycle status
+    batch.update(bicycleRef, {
+        status: 'Assigned',
+        currentAssignment: {
+            roomNumber: record.roomNumber,
+            guestName: record.guestName,
+            issueDate: record.issueDate,
+            departureDate: record.departureDate
+        },
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Create record
+    batch.set(recordRef, {
+        ...record,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    showNotification('Record created successfully');
 }
 
+async function updateBicycleRecord(id, record) {
+    const bicycleRef = db.collection('bicycleInventory').doc(record.bicycleNumber);
+    const recordRef = db.collection('bicycleRecords').doc(id);
+
+    const batch = db.batch();
+    
+    // Update bicycle assignment
+    batch.update(bicycleRef, {
+        currentAssignment: {
+            roomNumber: record.roomNumber,
+            guestName: record.guestName,
+            issueDate: record.issueDate,
+            departureDate: record.departureDate
+        },
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Update record
+    batch.update(recordRef, {
+        ...record,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    showNotification('Record updated successfully');
+}
+async function createFaultyBicycle(faultyBicycle) {
+    const bicycleRef = db.collection('bicycleInventory').doc(faultyBicycle.bicycleNumber);
+    const faultyRef = db.collection('faultyBicycles').doc();
+
+    const batch = db.batch();
+    
+    // Update bicycle status
+    batch.update(bicycleRef, {
+        status: 'Maintenance',
+        currentIssue: {
+            description: faultyBicycle.issueDescription,
+            priority: faultyBicycle.priority,
+            reportedDate: faultyBicycle.reportedDate
+        },
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Create faulty record
+    batch.set(faultyRef, faultyBicycle);
+
+    await batch.commit();
+    showNotification('Faulty bicycle reported successfully');
+}
+
+async function updateFaultyBicycle(id, faultyBicycle) {
+    const existingDoc = await db.collection('faultyBicycles').doc(id).get();
+    const existingData = existingDoc.data();
+
+    const updatedBicycle = {
+        ...faultyBicycle,
+        maintenanceHistory: [
+            ...(existingData.maintenanceHistory || []),
+            ...faultyBicycle.maintenanceHistory
+        ]
+    };
+
+    await db.collection('faultyBicycles').doc(id).update(updatedBicycle);
+    showNotification('Faulty bicycle record updated successfully');
+}
+```
+
+4. Add missing `displaySearchResults` function:
+
+```javascript
+function displaySearchResults(activeResults, faultyResults) {
+    const table = document.querySelector('#recordsTable tbody');
+    if (!table) return;
+
+    const combinedResults = activeResults.map(record => ({
+        ...record,
+        type: 'active'
+    })).concat(faultyResults.map(record => ({
+        ...record,
+        type: 'faulty'
+    })));
+
+    table.innerHTML = combinedResults.map(result => `
+        <tr class="${result.type}-record">
+            <td>${result.roomNumber || '-'}</td>
+            <td>${result.guestName || '-'}</td>
+            <td>${result.type === 'active' ? formatDate(result.issueDate) : '-'}</td>
+            <td>${result.type === 'active' ? formatDate(result.departureDate) : '-'}</td>
+            <td>${result.bicycleNumber}</td>
+            <td>
+                <span class="status-indicator status-${result.type}">
+                    ${result.type === 'active' ? result.status : 'Under Maintenance'}
+                </span>
+            </td>
+            <td class="no-print">
+                ${result.type === 'active' ? 
+                    `<button class="return-btn" onclick="markAsReturned('${result.id}')">Return</button>` :
+                    `<button class="fix-btn" onclick="markAsFixed('${result.id}')">Mark Fixed</button>`
+                }
+            </td>
+        </tr>
+    `).join('');
+}
+.active-record { background-color: #fff; }
+.faulty-record { background-color: #fff3e0; }
+.status-active { background-color: #e8f5e9; color: #2e7d32; }
+.status-faulty { background-color: #ffebee; color: #d32f2f; }
 // Database Loading Functions
 async function loadRecords() {
     try {
