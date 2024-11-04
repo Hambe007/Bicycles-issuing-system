@@ -7,28 +7,6 @@ const firebaseConfig = {
   messagingSenderId: "64926990610",
   appId: "1:64926990610:web:f45390888ea1d0dfb5f3cb"
 };
-
-// Add this test function to verify Firebase connection:
-async function testFirebaseConnection() {
-    try {
-        // Test Firestore
-        await db.collection('test').add({
-            test: true,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log('Firestore connection successful');
-        
-        // Test Storage
-        const testRef = storage.ref().child('test/connection-test.txt');
-        await testRef.putString('test');
-        console.log('Storage connection successful');
-        
-        return true;
-    } catch (error) {
-        console.error('Firebase connection error:', error);
-        return false;
-    }
-}
 <!DOCTYPE html>
 <html lang="en">
 <head>
