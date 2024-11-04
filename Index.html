@@ -23,13 +23,13 @@
     <!-- Firebase Configuration -->
     <script>
         const firebaseConfig = {
-            apiKey: "your-api-key",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "your-sender-id",
-            appId: "your-app-id"
-        };
+  apiKey: "AIzaSyBjAGc8L0bkO_2RbWi0-rw7__lSHCoBrJQ",
+  authDomain: "bicycle-issuing-system2.firebaseapp.com",
+  projectId: "bicycle-issuing-system2",
+  storageBucket: "bicycle-issuing-system2.firebasestorage.app",
+  messagingSenderId: "64926990610",
+  appId: "1:64926990610:web:f45390888ea1d0dfb5f3cb"
+};
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
@@ -397,4 +397,143 @@ document.addEventListener('DOMContentLoaded', () => {
 const ArrivalPreparation = () => {
     const [arrivals, setArrivals] = React.useState([]);
     const [uploadError, setUploadError] = React.useState('');
-    const [isLoading, setIsLoading] =
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [uploadedFile, setUploadedFile] = React.useState(null);
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file || file.type !== 'application/pdf') {
+            setUploadError('Please upload a PDF file');
+            return;
+        }
+
+        setIsLoading(true);
+        setUploadError('');
+
+        try {
+            // Upload to Firebase Storage
+            const downloadURL = await uploadPDF(file);
+            
+            // Process PDF content
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let extractedText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                extractedText += textContent.items.map(item => item.str).join(' ');
+            }
+
+            // Parse extracted text for arrivals
+            const parsedArrivals = parseArrivalData(extractedText);
+            
+            // Store in Firestore
+            await storeArrivalRequests(parsedArrivals, downloadURL);
+            
+            setArrivals(parsedArrivals);
+            showNotification('Arrival report processed successfully');
+        } catch (error) {
+            console.error('Error processing PDF:', error);
+            setUploadError('Error processing PDF file');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const parseArrivalData = (text) => {
+        // Your PDF parsing logic here
+        // Return array of arrival objects
+    };
+
+    const storeArrivalRequests = async (arrivals, pdfUrl) => {
+        const batch = db.batch();
+        
+        arrivals.forEach(arrival => {
+            const docRef = db.collection('arrivalRequests').doc();
+            batch.set(docRef, {
+                ...arrival,
+                pdfUrl,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        });
+
+        await batch.commit();
+    };
+
+    return (
+        <div className="arrival-preparation">
+            {/* Upload Section */}
+            <div className="pdf-upload">
+                <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    disabled={isLoading}
+                />
+                {uploadError && <div className="error">{uploadError}</div>}
+                {isLoading && <div className="loading">Processing...</div>}
+            </div>
+
+            {/* Arrivals Table */}
+            {arrivals.length > 0 && (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Room</th>
+                            <th>Guest</th>
+                            <th>Arrival</th>
+                            <th>Departure</th>
+                            <th>Bicycle Requests</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {arrivals.map(arrival => (
+                            <tr key={arrival.id}>
+                                <td>{arrival.roomNumber}</td>
+                                <td>{arrival.guestName}</td>
+                                <td>{arrival.arrivalDate}</td>
+                                <td>{arrival.departureDate}</td>
+                                <td>
+                                    Adults: {arrival.bicycleRequest.adults}<br/>
+                                    Children: {arrival.bicycleRequest.children}
+                                </td>
+                                <td>{arrival.status}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+};
+
+// Initialize React components
+const initializeReactComponents = () => {
+    const arrivalRoot = ReactDOM.createRoot(document.getElementById('arrival-preparation-root'));
+    arrivalRoot.render(React.createElement(ArrivalPreparation));
+};
+
+// Initialize everything when document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Firebase
+    try {
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+        
+        // Load initial data
+        Promise.all([
+            loadRecords(),
+            loadFaultyBicycles(),
+        ]).then(() => {
+            // Initialize React components
+            initializeReactComponents();
+            showNotification('System initialized successfully');
+        });
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('Error initializing system', 'error');
+    }
+});
+</script>
