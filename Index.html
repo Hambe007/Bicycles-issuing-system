@@ -17,74 +17,8 @@
     <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
-    <!-- Firebase Configuration -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBjAGc8L0bkO_2RbWi0-rw7__lSHCoBrJQ",
-            authDomain: "bicycle-issuing-system2.firebaseapp.com",
-            projectId: "bicycle-issuing-system2",
-            storageBucket: "bicycle-issuing-system2.firebasestorage.app",
-            messagingSenderId: "64926990610",
-            appId: "1:64926990610:web:f45390888ea1d0dfb5f3cb"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-
-        // Global Constants
-        const BICYCLE_CONFIG = {
-            ADULT: {
-                PREFIX: 'A',
-                MIN: 1,
-                MAX: 400,
-                PAD_LENGTH: 3,
-                formatNumber: (num) => `A${num.toString().padStart(3, '0')}`,
-                validate: (num) => num >= 1 && num <= 400
-            },
-            KIDS: {
-                PREFIX: 'K',
-                MIN: 1,
-                MAX: 99,
-                PAD_LENGTH: 2,
-                formatNumber: (num) => `K${num.toString().padStart(2, '0')}`,
-                validate: (num) => num >= 1 && num <= 99,
-                sizes: ['16', '18', '20']
-            }
-        };
-
-        const BICYCLE_STATUS = {
-            AVAILABLE: 'Available',
-            ASSIGNED: 'Assigned',
-            MAINTENANCE: 'Under Maintenance',
-            RESERVED: 'Reserved'
-        };
-
-        // Firebase Connection Test
-        async function testFirebaseConnection() {
-            try {
-                const testDoc = await db.collection('test').add({
-                    test: true,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                await db.collection('test').doc(testDoc.id).delete();
-                console.log('Firebase connection successful');
-                return true;
-            } catch (error) {
-                console.error('Firebase connection error:', error);
-                return false;
-            }
-        }
-
-        // Initialize PDF.js worker
-        if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-        }
-    </script>
-</head>
-<style>
-    /* Base Container */
+    <style>
+    /* Base Styles */
     body {
         font-family: Arial, sans-serif;
         margin: 0;
@@ -98,7 +32,7 @@
         padding: 15px;
     }
 
-    /* Enhanced Header */
+    /* Header Styles */
     .header {
         background-color: white;
         padding: 1.5rem;
@@ -114,7 +48,7 @@
         text-align: center;
     }
 
-    /* Enhanced Tab Navigation */
+    /* Tab Navigation */
     .tab-container {
         background: white;
         padding: 1rem;
@@ -153,26 +87,7 @@
         box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
     }
 
-    /* Search Results Styles */
-    .active-record { 
-        background-color: #fff; 
-    }
-    
-    .faulty-record { 
-        background-color: #fff3e0; 
-    }
-    
-    .status-active { 
-        background-color: #e8f5e9; 
-        color: #2e7d32; 
-    }
-    
-    .status-faulty { 
-        background-color: #ffebee; 
-        color: #d32f2f; 
-    }
-
-    /* Form and Input Styles */
+    /* Form Styles */
     .form-section {
         background: white;
         padding: 1.5rem;
@@ -208,60 +123,6 @@
         transition: border-color 0.3s ease;
     }
 
-    .input-field:focus {
-        border-color: #4CAF50;
-        outline: none;
-    }
-
-    /* Bicycle Number Input */
-    .bicycle-number-input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        font-size: 1rem;
-        text-transform: uppercase;
-    }
-
-    .input-help {
-        display: block;
-        margin-top: 0.25rem;
-        font-size: 0.875rem;
-        color: #666;
-    }
-
-    /* Button Styles */
-    .button-group {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        flex-wrap: wrap;
-    }
-
-    button {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        min-width: 100px;
-    }
-
-    button:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-    }
-
-    .primary-btn { background-color: #4CAF50; color: white; }
-    .secondary-btn { background-color: #2196F3; color: white; }
-    .danger-btn { background-color: #f44336; color: white; }
-    .edit-btn { background-color: #ff9800; color: white; }
-    .return-btn { background-color: #4CAF50; color: white; }
-    .fix-btn { background-color: #2196F3; color: white; }
-    .history-btn { background-color: #9c27b0; color: white; }
-
     /* Table Styles */
     .table-container {
         overflow-x: auto;
@@ -291,10 +152,6 @@
         vertical-align: middle;
     }
 
-    .data-table tr:last-child td {
-        border-bottom: none;
-    }
-
     /* Status Indicators */
     .status-indicator {
         padding: 0.5rem 1rem;
@@ -310,42 +167,67 @@
     .status-maintenance { background-color: #fff3e0; color: #f57c00; }
     .status-reserved { background-color: #f3e5f5; color: #7b1fa2; }
 
-    /* Priority Badges */
-    .priority-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
+    /* Button Styles */
+    .button-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
     }
 
-    .priority-high { background-color: #ffebee; color: #c62828; }
-    .priority-medium { background-color: #fff3e0; color: #f57c00; }
-    .priority-low { background-color: #e8f5e9; color: #2e7d32; }
-
-    /* PDF Upload Area */
-    .pdf-upload {
-        border: 2px dashed #4CAF50;
-        padding: 2rem;
-        border-radius: 12px;
-        text-align: center;
-        background-color: #f8f9fa;
-        margin-bottom: 1.5rem;
+    button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
         transition: all 0.3s ease;
+        min-width: 100px;
     }
 
-    .pdf-upload:hover {
-        border-color: #2196F3;
-        background-color: #fff;
+    .primary-btn { background-color: #4CAF50; color: white; }
+    .secondary-btn { background-color: #2196F3; color: white; }
+    .danger-btn { background-color: #f44336; color: white; }
+
+    /* Arrival Preparation Specific Styles */
+    .arrival-preparation {
+        padding: 20px;
     }
 
-    .upload-icon {
-        font-size: 2rem;
-        color: #4CAF50;
-        margin-bottom: 1rem;
+    .statistics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
 
-    /* Loading and Notification */
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .pdf-upload {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container { padding: 10px; }
+        .header { padding: 1rem; }
+        .form-grid { grid-template-columns: 1fr; }
+        .button-group { flex-direction: column; }
+        .statistics-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Loading and Notifications */
     .loading-overlay {
         position: fixed;
         top: 0;
@@ -353,26 +235,10 @@
         right: 0;
         bottom: 0;
         background: rgba(255, 255, 255, 0.8);
-        display: flex;
-        flex-direction: column;
+        display: none;
         justify-content: center;
         align-items: center;
         z-index: 1000;
-    }
-
-    .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #4CAF50;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    .loading-text {
-        margin-top: 1rem;
-        color: #2c3e50;
-        font-weight: 500;
     }
 
     .notification {
@@ -382,75 +248,20 @@
         transform: translateX(-50%);
         padding: 1rem 2rem;
         border-radius: 8px;
-        background-color: #4CAF50;
         color: white;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         z-index: 1000;
         display: none;
-        animation: slideUp 0.3s ease-out;
     }
-
-    /* Animations */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translate(-50%, 100%);
-            opacity: 0;
-        }
-        to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-        }
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .container { padding: 10px; }
-        .header { padding: 1rem; }
-        .header h1 { font-size: 1.5rem; }
-        .tab-buttons { flex-direction: column; }
-        .tab-button { width: 100%; min-width: auto; }
-        .form-grid { grid-template-columns: 1fr; }
-        .button-group { flex-direction: column; }
-        button { width: 100%; margin-bottom: 0.5rem; }
-        .data-table { 
-            display: block;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .status-indicator { 
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-        }
-    }
-
-    /* Print Styles */
-    @media print {
-        .no-print { display: none !important; }
-        body { padding: 0; background: white; }
-        .container { max-width: none; padding: 0; }
-        .data-table { box-shadow: none; border: 1px solid #ddd; }
-        .status-indicator { border: 1px solid #ddd; }
-    }
-</style>
+    </style>
+</head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Hotel Bicycle Management System</h1>
         </div>
 
-        <div id="todayDepartures" class="departure-notice" style="display: none;">
-            <div class="content-section">
-                <h3>Today's Departures</h3>
-                <div id="departuresList"></div>
-            </div>
-        </div>
-
-        <div class="tab-container no-print">
+        <div class="tab-container">
             <div class="tab-buttons">
                 <button class="tab-button active" onclick="showTab('issuing')">Bicycle Issuing</button>
                 <button class="tab-button" onclick="showTab('faulty')">Faulty Bicycles</button>
@@ -458,159 +269,35 @@
             </div>
         </div>
 
-        <!-- Bicycle Issuing Tab -->
+        <!-- Tabs Content -->
         <div id="issuingTab" class="tab-content active">
-            <div class="content-section no-print">
-                <div class="search-section">
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <input type="text" id="bicycleSearch" class="input-field" 
-                                   placeholder="Search by Bicycle Number">
-                            <button onclick="searchByBicycle()" class="secondary-btn">Search Bicycle</button>
-                        </div>
-                        <div class="input-group">
-                            <input type="text" id="roomSearch" class="input-field" 
-                                   placeholder="Search by Room Number">
-                            <button onclick="searchByRoom()" class="secondary-btn">Search Room</button>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button onclick="resetSearch()" class="primary-btn">Reset Search</button>
-                        <button onclick="printDepartures()" class="secondary-btn">Print Today's Departures</button>
-                        <button onclick="printRecords()" class="secondary-btn">Print Records</button>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Bicycle Issuing Content -->
             <div class="content-section">
-                <form id="bicycleForm" class="form-section no-print">
-                    <h2>Issue Bicycle</h2>
-                    <input type="hidden" id="editIndex">
-                    
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label for="roomNumber" class="input-label">Room Number:</label>
-                            <input type="text" id="roomNumber" class="input-field" required
-                                   pattern="[0-9]{2,4}" placeholder="e.g., 101">
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="guestName" class="input-label">Guest Name:</label>
-                            <input type="text" id="guestName" class="input-field" required>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="issueDate" class="input-label">Date of Issue:</label>
-                            <input type="date" id="issueDate" class="input-field" required>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="departureDate" class="input-label">Date of Departure:</label>
-                            <input type="date" id="departureDate" class="input-field" required>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="bicycleNumber" class="input-label">Bicycle Number:</label>
-                            <input type="text" id="bicycleNumber" class="bicycle-number-input" required
-                                   pattern="^[AK][0-9]{2,3}$" placeholder="Format: A001 or K01"
-                                   oninput="this.value = this.value.toUpperCase()">
-                            <small class="input-help">Enter A001-A400 for adult bikes, K01-K99 for kids bikes</small>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="primary-btn">Save Record</button>
+                <form id="bicycleForm" class="form-section">
+                    <!-- Bicycle Issue Form -->
                 </form>
-
                 <div class="table-container">
                     <table id="recordsTable" class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Room Number</th>
-                                <th>Guest Name</th>
-                                <th>Issue Date</th>
-                                <th>Departure Date</th>
-                                <th>Bicycle Number</th>
-                                <th>Status</th>
-                                <th class="no-print">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
+                        <!-- Records Table -->
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- Faulty Bicycles Tab -->
         <div id="faultyTab" class="tab-content">
+            <!-- Faulty Bicycles Content -->
             <div class="content-section">
-                <div class="search-section no-print">
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <input type="text" id="faultyBicycleSearch" class="input-field" 
-                                   placeholder="Search faulty bicycle number">
-                            <button onclick="searchFaultyBicycle()" class="secondary-btn">Search</button>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button onclick="resetFaultySearch()" class="primary-btn">Reset</button>
-                        <button onclick="printFaultyBicycles()" class="secondary-btn">Print Report</button>
-                    </div>
-                </div>
-
-                <form id="faultyBicycleForm" class="form-section no-print">
-                    <h2>Report Faulty Bicycle</h2>
-                    <input type="hidden" id="faultyEditIndex">
-                    
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label for="faultyBicycleNumber" class="input-label">Bicycle Number:</label>
-                            <input type="text" id="faultyBicycleNumber" class="bicycle-number-input" required
-                                   pattern="^[AK][0-9]{2,3}$" placeholder="Format: A001 or K01"
-                                   oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="issueDescription" class="input-label">Issue Description:</label>
-                            <textarea id="issueDescription" class="input-field" required></textarea>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="priority" class="input-label">Priority Level:</label>
-                            <select id="priority" class="input-field" required>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="maintenanceNotes" class="input-label">Maintenance Notes:</label>
-                            <textarea id="maintenanceNotes" class="input-field"></textarea>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="primary-btn">Report Issue</button>
+                <form id="faultyBicycleForm" class="form-section">
+                    <!-- Faulty Bicycle Form -->
                 </form>
-
                 <div class="table-container">
                     <table id="faultyBicycleTable" class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Bicycle Number</th>
-                                <th>Issue Description</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Reported Date</th>
-                                <th class="no-print">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
+                        <!-- Faulty Bicycles Table -->
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- Arrival Preparation Tab -->
         <div id="arrivalTab" class="tab-content">
             <div id="arrival-preparation-root"></div>
         </div>
@@ -620,18 +307,56 @@
     <div id="notification" class="notification"></div>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Processing...</div>
     </div>
 </body>
+</html>
+// Add this script section after the HTML
+
 <script>
-// Global variables
-let records = [];
-let faultyBicycles = [];
-let availableBicycles = {
-    adult: [],
-    kids: []
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBjAGc8L0bkO_2RbWi0-rw7__lSHCoBrJQ",
+    authDomain: "bicycle-issuing-system2.firebaseapp.com",
+    projectId: "bicycle-issuing-system2",
+    storageBucket: "bicycle-issuing-system2.firebasestorage.app",
+    messagingSenderId: "64926990610",
+    appId: "1:64926990610:web:f45390888ea1d0dfb5f3cb"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// Global Constants
+const BICYCLE_CONFIG = {
+    ADULT: {
+        PREFIX: 'A',
+        MIN: 1,
+        MAX: 400,
+        PAD_LENGTH: 3,
+        formatNumber: (num) => `A${num.toString().padStart(3, '0')}`,
+        validate: (num) => num >= 1 && num <= 400
+    },
+    KIDS: {
+        PREFIX: 'K',
+        MIN: 1,
+        MAX: 99,
+        PAD_LENGTH: 2,
+        formatNumber: (num) => `K${num.toString().padStart(2, '0')}`,
+        validate: (num) => num >= 1 && num <= 99,
+        sizes: ['16', '18', '20']
+    }
+};
+
+const BICYCLE_STATUS = {
+    AVAILABLE: 'Available',
+    ASSIGNED: 'Assigned',
+    MAINTENANCE: 'Under Maintenance',
+    RESERVED: 'Reserved'
 };
 
 // Utility Functions
@@ -645,105 +370,159 @@ function formatDate(dateString) {
     });
 }
 
+function getNextDayDate() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+}
+
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
     notification.textContent = message;
     notification.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
     notification.style.display = 'block';
     
-    // Add animation
-    notification.style.animation = 'slideIn 0.5s ease-out';
-    
-    // Automatically hide after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.5s ease-out';
         setTimeout(() => {
             notification.style.display = 'none';
+            notification.style.animation = '';
         }, 500);
     }, 3000);
 }
 
 function showLoading(show = true) {
     const overlay = document.getElementById('loadingOverlay');
-    if (show) {
-        overlay.style.display = 'flex';
-    } else {
-        overlay.style.display = 'none';
-    }
+    overlay.style.display = show ? 'flex' : 'none';
 }
 
-// Bicycle Availability Check
-async function checkBicycleAvailability(bicycleNumber) {
+async function testFirebaseConnection() {
     try {
-        const doc = await db.collection('bicycleInventory').doc(bicycleNumber).get();
-        if (!doc.exists) {
-            return false;
-        }
-        const bike = doc.data();
-        return bike.status === 'Available';
+        const testDoc = await db.collection('test').add({
+            test: true,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await db.collection('test').doc(testDoc.id).delete();
+        console.log('Firebase connection successful');
+        return true;
     } catch (error) {
-        console.error('Error checking bicycle availability:', error);
+        console.error('Firebase connection error:', error);
         return false;
     }
 }
 
-// Database Operations
-async function createBicycleRecord(record) {
-    const bicycleRef = db.collection('bicycleInventory').doc(record.bicycleNumber);
-    const recordRef = db.collection('bicycleRecords').doc();
-
-    const batch = db.batch();
+// Tab Navigation
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
     
-    // Update bicycle status
-    batch.update(bicycleRef, {
-        status: 'Assigned',
-        currentAssignment: {
-            roomNumber: record.roomNumber,
-            guestName: record.guestName,
-            issueDate: record.issueDate,
-            departureDate: record.departureDate
-        },
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
     });
+    
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + 'Tab');
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+    }
+    
+    // Add active class to clicked button
+    const activeButton = document.querySelector(`button[onclick="showTab('${tabName}')"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
 
-    // Create record
-    batch.set(recordRef, {
-        ...record,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    await batch.commit();
-    showNotification('Record created successfully');
+    // Special handling for arrival tab
+    if (tabName === 'arrival') {
+        const arrivalRoot = document.getElementById('arrival-preparation-root');
+        if (arrivalRoot) {
+            ReactDOM.createRoot(arrivalRoot).render(React.createElement(ArrivalPreparation));
+        }
+    }
 }
 
-async function updateBicycleRecord(id, record) {
-    const bicycleRef = db.collection('bicycleInventory').doc(record.bicycleNumber);
-    const recordRef = db.collection('bicycleRecords').doc(id);
-
-    const batch = db.batch();
+// Validation Functions
+function validateBicycleNumber(number) {
+    const prefix = number.charAt(0);
+    const numericPart = parseInt(number.slice(1));
     
-    // Update bicycle assignment
-    batch.update(bicycleRef, {
-        currentAssignment: {
-            roomNumber: record.roomNumber,
-            guestName: record.guestName,
-            issueDate: record.issueDate,
-            departureDate: record.departureDate
-        },
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Update record
-    batch.update(recordRef, {
-        ...record,
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    await batch.commit();
-    showNotification('Record updated successfully');
+    if (prefix === 'A') {
+        return BICYCLE_CONFIG.ADULT.validate(numericPart);
+    } else if (prefix === 'K') {
+        return BICYCLE_CONFIG.KIDS.validate(numericPart);
+    }
+    return false;
 }
 
-// Load Data Functions
+function validateRoomNumber(roomNumber) {
+    const num = parseInt(roomNumber);
+    return !isNaN(num) && num >= 100 && num <= 9999;
+}
+
+// Error Handler
+window.onerror = function(msg, url, line, col, error) {
+    console.error('Global error:', { msg, url, line, col, error });
+    showNotification('An error occurred. Please try again.', 'error');
+    return false;
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        showLoading(true);
+
+        // Test Firebase connection
+        const connected = await testFirebaseConnection();
+        if (!connected) {
+            showNotification('Failed to connect to database', 'error');
+            return;
+        }
+
+        // Initialize PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+        
+        // Set default dates
+        const today = new Date().toISOString().split('T')[0];
+        const issueDateInput = document.getElementById('issueDate');
+        const departureDateInput = document.getElementById('departureDate');
+        
+        if (issueDateInput) {
+            issueDateInput.value = today;
+            issueDateInput.min = today;
+        }
+        
+        if (departureDateInput) {
+            departureDateInput.min = today;
+        }
+
+        // Initialize React components
+        const arrivalRoot = document.getElementById('arrival-preparation-root');
+        if (arrivalRoot) {
+            ReactDOM.createRoot(arrivalRoot).render(React.createElement(ArrivalPreparation));
+        }
+
+        showNotification('System initialized successfully');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('Error initializing system', 'error');
+    } finally {
+        showLoading(false);
+    }
+});
+</script>
+<script>
+// Global State
+let records = [];
+let faultyBicycles = [];
+let availableBicycles = {
+    adult: [],
+    kids: []
+};
+
+// Record Management Functions
 async function loadRecords() {
     try {
         showLoading(true);
@@ -766,6 +545,111 @@ async function loadRecords() {
     }
 }
 
+async function checkBicycleAvailability(bicycleNumber) {
+    try {
+        const doc = await db.collection('bicycleInventory').doc(bicycleNumber).get();
+        if (!doc.exists) {
+            return false;
+        }
+        const bike = doc.data();
+        return bike.status === BICYCLE_STATUS.AVAILABLE;
+    } catch (error) {
+        console.error('Error checking bicycle availability:', error);
+        return false;
+    }
+}
+
+async function createBicycleRecord(record) {
+    const bicycleRef = db.collection('bicycleInventory').doc(record.bicycleNumber);
+    const recordRef = db.collection('bicycleRecords').doc();
+
+    const batch = db.batch();
+    
+    // Update bicycle status
+    batch.update(bicycleRef, {
+        status: BICYCLE_STATUS.ASSIGNED,
+        currentAssignment: {
+            roomNumber: record.roomNumber,
+            guestName: record.guestName,
+            issueDate: record.issueDate,
+            departureDate: record.departureDate
+        },
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Create record
+    batch.set(recordRef, {
+        ...record,
+        status: 'Active',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    showNotification('Record created successfully');
+}
+
+async function updateBicycleRecord(id, record) {
+    const bicycleRef = db.collection('bicycleInventory').doc(record.bicycleNumber);
+    const recordRef = db.collection('bicycleRecords').doc(id);
+
+    const batch = db.batch();
+    
+    batch.update(bicycleRef, {
+        currentAssignment: {
+            roomNumber: record.roomNumber,
+            guestName: record.guestName,
+            issueDate: record.issueDate,
+            departureDate: record.departureDate
+        },
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    batch.update(recordRef, {
+        ...record,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    showNotification('Record updated successfully');
+}
+
+async function markAsReturned(id) {
+    try {
+        showLoading(true);
+        const record = records.find(r => r.id === id);
+        if (!record) return;
+
+        const returnDate = new Date().toISOString();
+
+        const batch = db.batch();
+        
+        // Update record status
+        batch.update(db.collection('bicycleRecords').doc(id), {
+            status: 'Returned',
+            returnDate: returnDate,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update bicycle inventory status
+        batch.update(db.collection('bicycleInventory').doc(record.bicycleNumber), {
+            status: BICYCLE_STATUS.AVAILABLE,
+            lastReturn: returnDate,
+            currentAssignment: null,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await batch.commit();
+        showNotification('Bicycle marked as returned successfully');
+        await Promise.all([loadRecords(), loadAvailableBicycles()]);
+    } catch (error) {
+        console.error('Error marking bicycle as returned:', error);
+        showNotification('Error updating record', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Faulty Bicycle Management
 async function loadFaultyBicycles() {
     try {
         const snapshot = await db.collection('faultyBicycles')
@@ -784,10 +668,162 @@ async function loadFaultyBicycles() {
     }
 }
 
+async function createFaultyBicycle(faultyBicycle) {
+    const bicycleRef = db.collection('bicycleInventory').doc(faultyBicycle.bicycleNumber);
+    const faultyRef = db.collection('faultyBicycles').doc();
+
+    const batch = db.batch();
+    
+    // Update bicycle status
+    batch.update(bicycleRef, {
+        status: BICYCLE_STATUS.MAINTENANCE,
+        currentIssue: {
+            description: faultyBicycle.issueDescription,
+            priority: faultyBicycle.priority,
+            reportedDate: faultyBicycle.reportedDate
+        },
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Create faulty record
+    batch.set(faultyRef, {
+        ...faultyBicycle,
+        maintenanceHistory: [{
+            date: new Date().toISOString(),
+            action: 'Reported',
+            notes: faultyBicycle.maintenanceNotes || 'Initial report',
+            type: 'maintenance'
+        }],
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    await batch.commit();
+    showNotification('Faulty bicycle reported successfully');
+}
+
+async function updateFaultyBicycle(id, faultyBicycle) {
+    const existingDoc = await db.collection('faultyBicycles').doc(id).get();
+    const existingData = existingDoc.data();
+
+    // Merge maintenance history
+    const maintenanceHistory = [
+        ...(existingData.maintenanceHistory || []),
+        {
+            date: new Date().toISOString(),
+            action: 'Updated',
+            notes: faultyBicycle.maintenanceNotes,
+            type: 'maintenance'
+        }
+    ];
+
+    await db.collection('faultyBicycles').doc(id).update({
+        ...faultyBicycle,
+        maintenanceHistory,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showNotification('Faulty bicycle record updated successfully');
+}
+
+async function markAsFixed(id) {
+    try {
+        showLoading(true);
+        const bicycle = faultyBicycles.find(b => b.id === id);
+        if (!bicycle) return;
+
+        const fixedDate = new Date().toISOString();
+        const maintenanceHistory = [
+            ...(bicycle.maintenanceHistory || []),
+            {
+                date: fixedDate,
+                action: 'Fixed',
+                notes: 'Bicycle repaired and ready for use',
+                type: 'completion'
+            }
+        ];
+
+        const batch = db.batch();
+        
+        // Update faulty record
+        batch.update(db.collection('faultyBicycles').doc(id), {
+            status: 'Fixed',
+            fixedDate: fixedDate,
+            maintenanceHistory,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update bicycle inventory
+        batch.update(db.collection('bicycleInventory').doc(bicycle.bicycleNumber), {
+            status: BICYCLE_STATUS.AVAILABLE,
+            lastMaintenance: fixedDate,
+            currentIssue: null,
+            condition: 'Good',
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await batch.commit();
+        showNotification('Bicycle marked as fixed successfully');
+        await Promise.all([loadFaultyBicycles(), loadAvailableBicycles()]);
+    } catch (error) {
+        console.error('Error marking bicycle as fixed:', error);
+        showNotification('Error updating bicycle status', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Arrival Management
+async function loadNextDayArrivals() {
+    try {
+        const nextDay = getNextDayDate();
+        const snapshot = await db.collection('arrivalRequests')
+            .where('arrivalDate', '==', nextDay)
+            .orderBy('timestamp', 'desc')
+            .get();
+        
+        const arrivals = [];
+        snapshot.forEach(doc => {
+            arrivals.push({ id: doc.id, ...doc.data() });
+        });
+        return arrivals;
+    } catch (error) {
+        console.error('Error loading next day arrivals:', error);
+        throw error;
+    }
+}
+
+async function createArrivalRequest(arrival) {
+    try {
+        const docRef = await db.collection('arrivalRequests').add({
+            ...arrival,
+            status: 'Pending',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return docRef.id;
+    } catch (error) {
+        console.error('Error creating arrival request:', error);
+        throw error;
+    }
+}
+
+async function updateArrivalStatus(arrivalId, status) {
+    try {
+        await db.collection('arrivalRequests').doc(arrivalId).update({
+            status: status,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return true;
+    } catch (error) {
+        console.error('Error updating arrival status:', error);
+        throw error;
+    }
+}
+
+// Bicycle Inventory Management
 async function loadAvailableBicycles() {
     try {
         const snapshot = await db.collection('bicycleInventory')
-            .where('status', '==', 'Available')
+            .where('status', '==', BICYCLE_STATUS.AVAILABLE)
             .get();
 
         availableBicycles = {
@@ -809,6 +845,28 @@ async function loadAvailableBicycles() {
     }
 }
 
+// Departure Management
+function checkDepartures() {
+    const today = new Date().toISOString().split('T')[0];
+    const departingToday = records.filter(record => 
+        record.departureDate === today && 
+        record.status !== 'Returned'
+    );
+
+    if (departingToday.length > 0) {
+        const departuresList = document.getElementById('departuresList');
+        if (departuresList) {
+            departuresList.innerHTML = departingToday.map(record => `
+                <div class="departure-item">
+                    Room ${record.roomNumber} - ${record.bicycleNumber}
+                </div>
+            `).join('');
+            document.getElementById('todayDepartures').style.display = 'block';
+        }
+    }
+}
+</script>
+<script>
 // Display Functions
 function displayRecords(recordsToShow = records) {
     const table = document.querySelector('#recordsTable tbody');
@@ -841,7 +899,7 @@ function displayRecords(recordsToShow = records) {
                     <button class="return-btn" onclick="markAsReturned('${record.id}')">
                         Return
                     </button>
-                    <button class="delete-btn" onclick="deleteRecord('${record.id}')">
+                    <button class="danger-btn" onclick="deleteRecord('${record.id}')">
                         Delete
                     </button>
                 ` : ''}
@@ -900,40 +958,6 @@ function displayFaultyBicycles(bicyclesToShow = faultyBicycles) {
 }
 
 // Search Functions
-function displaySearchResults(activeResults, faultyResults) {
-    const table = document.querySelector('#recordsTable tbody');
-    if (!table) return;
-
-    const combinedResults = activeResults.map(record => ({
-        ...record,
-        type: 'active'
-    })).concat(faultyResults.map(record => ({
-        ...record,
-        type: 'faulty'
-    })));
-
-    table.innerHTML = combinedResults.map(result => `
-        <tr class="${result.type}-record">
-            <td>${result.roomNumber || '-'}</td>
-            <td>${result.guestName || '-'}</td>
-            <td>${result.type === 'active' ? formatDate(result.issueDate) : '-'}</td>
-            <td>${result.type === 'active' ? formatDate(result.departureDate) : '-'}</td>
-            <td>${result.bicycleNumber}</td>
-            <td>
-                <span class="status-indicator status-${result.type}">
-                    ${result.type === 'active' ? result.status : 'Under Maintenance'}
-                </span>
-            </td>
-            <td class="no-print">
-                ${result.type === 'active' ? 
-                    `<button class="return-btn" onclick="markAsReturned('${result.id}')">Return</button>` :
-                    `<button class="fix-btn" onclick="markAsFixed('${result.id}')">Mark Fixed</button>`
-                }
-            </td>
-        </tr>
-    `).join('');
-}
-
 async function searchByBicycle() {
     const searchTerm = document.getElementById('bicycleSearch').value.toUpperCase();
     if (!searchTerm) {
@@ -978,204 +1002,41 @@ function searchByRoom() {
     displayRecords(filtered);
 }
 
-function resetSearch() {
-    document.getElementById('bicycleSearch').value = '';
-    document.getElementById('roomSearch').value = '';
-    displayRecords();
-}
-</script>
-<script>
-// Record Management Functions
-async function editRecord(id) {
-    const record = records.find(r => r.id === id);
-    if (!record) return;
+function displaySearchResults(activeResults, faultyResults) {
+    const table = document.querySelector('#recordsTable tbody');
+    if (!table) return;
 
-    document.getElementById('roomNumber').value = record.roomNumber;
-    document.getElementById('guestName').value = record.guestName;
-    document.getElementById('issueDate').value = record.issueDate;
-    document.getElementById('departureDate').value = record.departureDate;
-    document.getElementById('bicycleNumber').value = record.bicycleNumber;
-    document.getElementById('editIndex').value = id;
+    const combinedResults = activeResults.map(record => ({
+        ...record,
+        type: 'active'
+    })).concat(faultyResults.map(record => ({
+        ...record,
+        type: 'faulty'
+    })));
 
-    // Scroll to form
-    document.getElementById('bicycleForm').scrollIntoView({ behavior: 'smooth' });
-}
-
-async function markAsReturned(id) {
-    if (!confirm('Are you sure you want to mark this bicycle as returned?')) return;
-
-    try {
-        showLoading(true);
-        const record = records.find(r => r.id === id);
-        if (!record) return;
-
-        const returnDate = new Date().toISOString();
-
-        // Update record status
-        await db.collection('bicycleRecords').doc(id).update({
-            status: 'Returned',
-            returnDate: returnDate,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // Update bicycle inventory status
-        await db.collection('bicycleInventory')
-            .doc(record.bicycleNumber)
-            .update({
-                status: 'Available',
-                lastReturn: returnDate,
-                currentAssignment: null,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-        showNotification('Bicycle marked as returned successfully');
-        await Promise.all([loadRecords(), loadAvailableBicycles()]);
-    } catch (error) {
-        console.error('Error marking bicycle as returned:', error);
-        showNotification('Error updating record', 'error');
-    } finally {
-        showLoading(false);
-    }
+    table.innerHTML = combinedResults.map(result => `
+        <tr class="${result.type}-record">
+            <td>${result.roomNumber || '-'}</td>
+            <td>${result.guestName || '-'}</td>
+            <td>${result.type === 'active' ? formatDate(result.issueDate) : '-'}</td>
+            <td>${result.type === 'active' ? formatDate(result.departureDate) : '-'}</td>
+            <td>${result.bicycleNumber}</td>
+            <td>
+                <span class="status-indicator status-${result.type}">
+                    ${result.type === 'active' ? result.status : 'Under Maintenance'}
+                </span>
+            </td>
+            <td class="no-print">
+                ${result.type === 'active' ? 
+                    `<button class="return-btn" onclick="markAsReturned('${result.id}')">Return</button>` :
+                    `<button class="fix-btn" onclick="markAsFixed('${result.id}')">Mark Fixed</button>`
+                }
+            </td>
+        </tr>
+    `).join('');
 }
 
-async function deleteRecord(id) {
-    if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
-
-    try {
-        showLoading(true);
-        const record = records.find(r => r.id === id);
-        if (!record) return;
-
-        await db.collection('bicycleRecords').doc(id).delete();
-        
-        // Reset bicycle status if it was active
-        if (record.status !== 'Returned') {
-            await db.collection('bicycleInventory')
-                .doc(record.bicycleNumber)
-                .update({
-                    status: 'Available',
-                    currentAssignment: null,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-        }
-
-        showNotification('Record deleted successfully');
-        await Promise.all([loadRecords(), loadAvailableBicycles()]);
-    } catch (error) {
-        console.error('Error deleting record:', error);
-        showNotification('Error deleting record', 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-// Faulty Bicycle Functions
-async function createFaultyBicycle(faultyBicycle) {
-    const bicycleRef = db.collection('bicycleInventory').doc(faultyBicycle.bicycleNumber);
-    const faultyRef = db.collection('faultyBicycles').doc();
-
-    const batch = db.batch();
-    
-    // Update bicycle status
-    batch.update(bicycleRef, {
-        status: 'Maintenance',
-        currentIssue: {
-            description: faultyBicycle.issueDescription,
-            priority: faultyBicycle.priority,
-            reportedDate: faultyBicycle.reportedDate
-        },
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Create faulty record
-    batch.set(faultyRef, {
-        ...faultyBicycle,
-        maintenanceHistory: [{
-            date: new Date().toISOString(),
-            action: 'Reported',
-            notes: faultyBicycle.maintenanceNotes || 'Initial report',
-            type: 'maintenance'
-        }]
-    });
-
-    await batch.commit();
-    showNotification('Faulty bicycle reported successfully');
-}
-
-async function updateFaultyBicycle(id, faultyBicycle) {
-    const existingDoc = await db.collection('faultyBicycles').doc(id).get();
-    const existingData = existingDoc.data();
-
-    // Merge maintenance history
-    const maintenanceHistory = [
-        ...(existingData.maintenanceHistory || []),
-        {
-            date: new Date().toISOString(),
-            action: 'Updated',
-            notes: faultyBicycle.maintenanceNotes,
-            type: 'maintenance'
-        }
-    ];
-
-    await db.collection('faultyBicycles').doc(id).update({
-        ...faultyBicycle,
-        maintenanceHistory,
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    showNotification('Faulty bicycle record updated successfully');
-}
-
-async function markAsFixed(id) {
-    if (!confirm('Are you sure you want to mark this bicycle as fixed?')) return;
-
-    try {
-        showLoading(true);
-        const bicycle = faultyBicycles.find(b => b.id === id);
-        if (!bicycle) return;
-
-        const fixedDate = new Date().toISOString();
-        const maintenanceHistory = [
-            ...(bicycle.maintenanceHistory || []),
-            {
-                date: fixedDate,
-                action: 'Fixed',
-                notes: 'Bicycle repaired and ready for use',
-                type: 'completion'
-            }
-        ];
-
-        const batch = db.batch();
-        
-        // Update faulty record
-        batch.update(db.collection('faultyBicycles').doc(id), {
-            status: 'Fixed',
-            fixedDate: fixedDate,
-            maintenanceHistory,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // Update bicycle inventory
-        batch.update(db.collection('bicycleInventory').doc(bicycle.bicycleNumber), {
-            status: 'Available',
-            lastMaintenance: fixedDate,
-            currentIssue: null,
-            condition: 'Good',
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        await batch.commit();
-        showNotification('Bicycle marked as fixed successfully');
-        await Promise.all([loadFaultyBicycles(), loadAvailableBicycles()]);
-    } catch (error) {
-        console.error('Error marking bicycle as fixed:', error);
-        showNotification('Error updating bicycle status', 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-// Form Submission Handlers
+// Form Handlers
 document.getElementById('bicycleForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     showLoading(true);
@@ -1253,384 +1114,6 @@ document.getElementById('faultyBicycleForm').addEventListener('submit', async fu
     }
 });
 
-// Initialize System
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        showLoading(true);
-
-        // Test Firebase connection
-        const connected = await testFirebaseConnection();
-        if (!connected) {
-            showNotification('Failed to connect to database', 'error');
-            return;
-        }
-
-        // Initialize PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-        
-        // Load initial data
-        await Promise.all([
-            loadRecords(),
-            loadFaultyBicycles(),
-            loadAvailableBicycles()
-        ]);
-
-        // Set today's date as default for issue date
-        const today = new Date().toISOString().split('T')[0];
-        const issueDateInput = document.getElementById('issueDate');
-        if (issueDateInput) {
-            issueDateInput.value = today;
-            issueDateInput.min = today;
-        }
-
-        // Set minimum date for departure date
-        const departureDateInput = document.getElementById('departureDate');
-        if (departureDateInput) {
-            departureDateInput.min = today;
-        }
-
-        showNotification('System initialized successfully');
-    } catch (error) {
-        console.error('Initialization error:', error);
-        showNotification('Error initializing system', 'error');
-    } finally {
-        showLoading(false);
-    }
-});
-</script>
-<script>
-// PDF Processing Utilities
-const PDFProcessor = {
-    async extractText(file) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let extractedText = '';
-        
-        try {
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                
-                // Sort items by position
-                const lines = {};
-                textContent.items.forEach(item => {
-                    const y = Math.round(item.transform[5]); // Vertical position
-                    if (!lines[y]) lines[y] = [];
-                    lines[y].push({
-                        text: item.str,
-                        x: item.transform[4] // Horizontal position
-                    });
-                });
-
-                Object.keys(lines).forEach(y => {
-                    lines[y].sort((a, b) => a.x - b.x);
-                    extractedText += lines[y].map(item => item.text).join(' ') + '\n';
-                });
-            }
-            
-            return this.parseColumns(extractedText);
-        } catch (error) {
-            console.error('Error extracting PDF text:', error);
-            throw new Error('Failed to process PDF content');
-        }
-    },
-
-    parseColumns(text) {
-        const lines = text.split('\n').filter(line => line.trim());
-        const data = [];
-        
-        try {
-            let currentEntry = null;
-            let isReadingEntry = false;
-
-            lines.forEach(line => {
-                // Look for room number pattern
-                const roomMatch = line.match(/(?:RM|ROOM)\s*(?:NO)?\.?\s*(\d{2,4})/i) || 
-                                line.match(/^(\d{2,4})\s*$/);
-                
-                if (roomMatch) {
-                    if (currentEntry) {
-                        data.push(this.validateEntry(currentEntry));
-                    }
-                    currentEntry = {
-                        roomNumber: roomMatch[1],
-                        guestName: '',
-                        arrivalDate: '',
-                        departureDate: ''
-                    };
-                    isReadingEntry = true;
-                    return;
-                }
-
-                if (!currentEntry) return;
-
-                // Look for guest name
-                const guestMatch = line.match(/(?:GUEST|NAME):\s*(.+)/i);
-                if (guestMatch) {
-                    currentEntry.guestName = guestMatch[1].trim();
-                    return;
-                }
-
-                // Look for dates
-                const dateMatch = line.match(/(?:ARR|ARRIVAL).*?(\d{2}[-/]\d{2}[-/]\d{4})/i);
-                const depMatch = line.match(/(?:DEP|DEPARTURE).*?(\d{2}[-/]\d{2}[-/]\d{4})/i);
-                
-                if (dateMatch) {
-                    currentEntry.arrivalDate = this.formatDate(dateMatch[1]);
-                }
-                if (depMatch) {
-                    currentEntry.departureDate = this.formatDate(depMatch[1]);
-                }
-            });
-
-            // Don't forget the last entry
-            if (currentEntry) {
-                data.push(this.validateEntry(currentEntry));
-            }
-
-            return data;
-        } catch (error) {
-            console.error('Error parsing PDF:', error);
-            throw new Error('Failed to parse arrival information');
-        }
-    },
-
-    validateEntry(entry) {
-        if (!entry.roomNumber || !entry.guestName || !entry.arrivalDate || !entry.departureDate) {
-            throw new Error(`Incomplete entry found for Room ${entry.roomNumber}`);
-        }
-
-        return {
-            id: Date.now() + Math.random().toString(36).substr(2, 9),
-            ...entry,
-            status: 'Pending',
-            bicycleRequest: {
-                adults: 2, // Default to 2 adult bikes
-                children: 0
-            },
-            timestamp: new Date().toISOString()
-        };
-    },
-
-    formatDate(dateStr) {
-        try {
-            const cleanDate = dateStr.replace(/[^\d\/\-]/g, '');
-            let day, month, year;
-
-            if (cleanDate.includes('/')) {
-                [day, month, year] = cleanDate.split('/');
-            } else if (cleanDate.includes('-')) {
-                [day, month, year] = cleanDate.split('-');
-            } else {
-                throw new Error('Invalid date format');
-            }
-
-            // Ensure 4-digit year
-            year = year.length === 2 ? '20' + year : year;
-            
-            // Pad with zeros
-            day = day.padStart(2, '0');
-            month = month.padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        } catch (error) {
-            console.error('Error formatting date:', dateStr, error);
-            return null;
-        }
-    }
-};
-
-// Arrival Preparation Component
-const ArrivalPreparation = () => {
-    const [arrivals, setArrivals] = React.useState([]);
-    const [uploadError, setUploadError] = React.useState('');
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [statistics, setStatistics] = React.useState({
-        total: 0,
-        pending: 0,
-        ready: 0,
-        assigned: 0
-    });
-
-    React.useEffect(() => {
-        loadSavedArrivals();
-    }, []);
-
-    const loadSavedArrivals = async () => {
-        try {
-            const snapshot = await db.collection('arrivalRequests')
-                .where('arrivalDate', '>=', new Date().toISOString().split('T')[0])
-                .orderBy('arrivalDate')
-                .get();
-
-            const loadedArrivals = [];
-            snapshot.forEach(doc => {
-                loadedArrivals.push({ id: doc.id, ...doc.data() });
-            });
-
-            setArrivals(loadedArrivals);
-            updateStatistics(loadedArrivals);
-        } catch (error) {
-            console.error('Error loading arrivals:', error);
-            showNotification('Error loading arrival requests', 'error');
-        }
-    };
-
-    const updateStatistics = (arrivalList) => {
-        const stats = arrivalList.reduce((acc, arrival) => ({
-            total: acc.total + 1,
-            pending: acc.pending + (arrival.status === 'Pending' ? 1 : 0),
-            ready: acc.ready + (arrival.status === 'Ready' ? 1 : 0),
-            assigned: acc.assigned + (arrival.status === 'Assigned' ? 1 : 0)
-        }), { total: 0, pending: 0, ready: 0, assigned: 0 });
-
-        setStatistics(stats);
-    };
-
-    const handleFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (!file || file.type !== 'application/pdf') {
-            setUploadError('Please upload a PDF file');
-            return;
-        }
-
-        setIsLoading(true);
-        setUploadError('');
-
-        try {
-            // Process PDF
-            const extractedData = await PDFProcessor.extractText(file);
-            
-            if (!extractedData || extractedData.length === 0) {
-                throw new Error('No valid arrival data found in PDF');
-            }
-
-            // Store in Firestore
-            const batch = db.batch();
-            extractedData.forEach(arrival => {
-                const docRef = db.collection('arrivalRequests').doc();
-                batch.set(docRef, {
-                    ...arrival,
-                    pdfSource: file.name,
-                    uploadTime: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            });
-            await batch.commit();
-
-            setArrivals(prev => [...prev, ...extractedData]);
-            updateStatistics([...arrivals, ...extractedData]);
-            showNotification(`Successfully processed ${extractedData.length} arrivals`);
-            event.target.value = '';
-        } catch (error) {
-            console.error('Error processing PDF:', error);
-            setUploadError(error.message || 'Error processing PDF file');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Render methods
-    const renderStatistics = () => {
-        return React.createElement('div', { className: 'statistics-grid' },
-            Object.entries({
-                'Total Arrivals': statistics.total,
-                'Pending': statistics.pending,
-                'Ready': statistics.ready,
-                'Assigned': statistics.assigned
-            }).map(([label, value]) =>
-                React.createElement('div', { 
-                    key: label,
-                    className: 'stat-card'
-                },
-                    React.createElement('h3', null, label),
-                    React.createElement('p', null, value)
-                )
-            )
-        );
-    };
-
-    const renderUploadSection = () => {
-        return React.createElement('div', { className: 'pdf-upload' },
-            React.createElement('div', { className: 'upload-instructions' },
-                React.createElement('h3', null, 'Upload Arrival Report'),
-                React.createElement('p', null, 'Upload PDF file containing arrival information')
-            ),
-            React.createElement('input', {
-                type: 'file',
-                accept: '.pdf',
-                onChange: handleFileUpload,
-                disabled: isLoading,
-                className: 'file-input'
-            }),
-            uploadError && React.createElement('div', { 
-                className: 'error'
-            }, uploadError),
-            isLoading && React.createElement('div', { 
-                className: 'loading-spinner'
-            })
-        );
-    };
-
-    const renderArrivalsTable = () => {
-        if (!arrivals.length) return null;
-
-        return React.createElement('div', { className: 'table-container' },
-            React.createElement('table', { className: 'data-table' },
-                React.createElement('thead', null,
-                    React.createElement('tr', null,
-                        React.createElement('th', null, 'Room'),
-                        React.createElement('th', null, 'Guest'),
-                        React.createElement('th', null, 'Arrival'),
-                        React.createElement('th', null, 'Departure'),
-                        React.createElement('th', null, 'Status'),
-                        React.createElement('th', null, 'Actions')
-                    )
-                ),
-                React.createElement('tbody', null,
-                    arrivals.map(arrival => 
-                        React.createElement('tr', { 
-                            key: arrival.id,
-                            className: `status-${arrival.status.toLowerCase()}`
-                        },
-                            React.createElement('td', null, arrival.roomNumber),
-                            React.createElement('td', null, arrival.guestName),
-                            React.createElement('td', null, formatDate(arrival.arrivalDate)),
-                            React.createElement('td', null, formatDate(arrival.departureDate)),
-                            React.createElement('td', null,
-                                React.createElement('span', {
-                                    className: `status-indicator status-${arrival.status.toLowerCase()}`
-                                }, arrival.status)
-                            ),
-                            React.createElement('td', null,
-                                arrival.status === 'Pending' &&
-                                React.createElement('button', {
-                                    onClick: () => markArrivalReady(arrival.id),
-                                    className: 'ready-btn'
-                                }, 'Mark Ready')
-                            )
-                        )
-                    )
-                )
-            )
-        );
-    };
-
-    return React.createElement('div', { className: 'arrival-preparation' },
-        renderStatistics(),
-        renderUploadSection(),
-        renderArrivalsTable()
-    );
-};
-
-// Initialize React Components
-document.addEventListener('DOMContentLoaded', () => {
-    const arrivalRoot = document.getElementById('arrival-preparation-root');
-    if (arrivalRoot) {
-        ReactDOM.createRoot(arrivalRoot).render(React.createElement(ArrivalPreparation));
-    }
-});
-</script>
-<script>
 // Print Functions
 function printDepartures() {
     const today = new Date().toLocaleDateString();
@@ -1657,8 +1140,6 @@ function printDepartures() {
                     padding-bottom: 10px;
                     border-bottom: 2px solid #4CAF50;
                 }
-                .header h1 { margin: 0; color: #2c3e50; }
-                .header .date { color: #666; font-size: 0.9em; }
                 table { 
                     width: 100%; 
                     border-collapse: collapse; 
@@ -1669,17 +1150,8 @@ function printDepartures() {
                     padding: 12px; 
                     text-align: left; 
                 }
-                th { background-color: #4CAF50; color: white; }
-                .bicycle-info { font-weight: bold; color: #2196F3; }
-                .footer {
-                    margin-top: 30px;
-                    text-align: center;
-                    font-size: 0.8em;
-                    color: #666;
-                }
                 @media print {
                     .header { border-bottom-color: #000; }
-                    th { background-color: #eee !important; color: #000 !important; }
                 }
             </style>
         </head>
@@ -1695,7 +1167,6 @@ function printDepartures() {
                         <th>Guest Name</th>
                         <th>Bicycle</th>
                         <th>Issue Date</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1703,14 +1174,13 @@ function printDepartures() {
                         <tr>
                             <td>${record.roomNumber}</td>
                             <td>${record.guestName}</td>
-                            <td class="bicycle-info">${record.bicycleNumber}</td>
+                            <td>${record.bicycleNumber}</td>
                             <td>${formatDate(record.issueDate)}</td>
-                            <td>${record.status || 'Active'}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
-            <div class="footer">
+            <div style="margin-top: 20px; text-align: center;">
                 <p>Total Departures: ${departingToday.length}</p>
                 <p>Generated on ${new Date().toLocaleString()}</p>
             </div>
@@ -1721,131 +1191,589 @@ function printDepartures() {
     setTimeout(() => printWindow.print(), 500);
 }
 
-function printFaultyBicycles() {
-    const today = new Date().toLocaleDateString();
-    const faultyBikesUnderRepair = faultyBicycles.filter(b => b.status !== 'Fixed');
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Faulty Bicycles Report - ${today}</title>
-            <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    padding: 20px;
-                    margin: 0;
-                }
-                .header {
-                    text-align: center;
-                    margin-bottom: 20px;
-                    padding-bottom: 10px;
-                    border-bottom: 2px solid #f44336;
-                }
-                .priority-high { background-color: #ffebee; }
-                .priority-medium { background-color: #fff3e0; }
-                .priority-low { background-color: #e8f5e9; }
-                table { 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    margin-top: 20px;
-                }
-                th, td { 
-                    border: 1px solid #ddd; 
-                    padding: 12px; 
-                    text-align: left; 
-                }
-                th { background-color: #f44336; color: white; }
-                .maintenance-notes { 
-                    font-style: italic;
-                    color: #666;
-                }
-                .priority-badge {
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    font-size: 0.8em;
-                    font-weight: bold;
-                }
-                .summary {
-                    margin: 20px 0;
-                    padding: 15px;
-                    background: #f5f5f5;
-                    border-radius: 4px;
-                }
-                @media print {
-                    .header { border-bottom-color: #000; }
-                    th { background-color: #eee !important; color: #000 !important; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>Faulty Bicycles Report</h1>
-                <div class="date">${today}</div>
-            </div>
-            <div class="summary">
-                <h3>Summary</h3>
-                <p>Total Bicycles Under Repair: ${faultyBikesUnderRepair.length}</p>
-                <p>High Priority: ${faultyBikesUnderRepair.filter(b => b.priority === 'high').length}</p>
-                <p>Medium Priority: ${faultyBikesUnderRepair.filter(b => b.priority === 'medium').length}</p>
-                <p>Low Priority: ${faultyBikesUnderRepair.filter(b => b.priority === 'low').length}</p>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Bicycle Number</th>
-                        <th>Issue Description</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Reported Date</th>
-                        <th>Maintenance Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${faultyBikesUnderRepair.map(bicycle => `
-                        <tr class="priority-${bicycle.priority}">
-                            <td>${bicycle.bicycleNumber}</td>
-                            <td>${bicycle.issueDescription}</td>
-                            <td>
-                                <span class="priority-badge priority-${bicycle.priority}">
-                                    ${bicycle.priority.toUpperCase()}
-                                </span>
-                            </td>
-                            <td>${bicycle.status}</td>
-                            <td>${formatDate(bicycle.reportedDate)}</td>
-                            <td class="maintenance-notes">${bicycle.maintenanceNotes || 'No notes'}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-            <div class="footer">
-                <p>Generated on ${new Date().toLocaleString()}</p>
-            </div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 500);
+// Reset Functions
+function resetSearch() {
+    document.getElementById('bicycleSearch').value = '';
+    document.getElementById('roomSearch').value = '';
+    displayRecords();
 }
 
-// Error Handler
-window.onerror = function(msg, url, line, col, error) {
-    console.error('Global error:', { msg, url, line, col, error });
-    showNotification('An error occurred. Please try again.', 'error');
-    return false;
-};
-
-// Service Worker Registration (for offline capability)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').then(function(registration) {
-            console.log('ServiceWorker registration successful');
-        }, function(err) {
-            console.error('ServiceWorker registration failed:', err);
-        });
-    });
+function resetFaultySearch() {
+    document.getElementById('faultyBicycleSearch').value = '';
+    displayFaultyBicycles();
 }
 </script>
-</body>
-</html>
+<script>
+// Arrival Preparation React Component
+const ArrivalPreparation = () => {
+    const [arrivals, setArrivals] = React.useState([]);
+    const [uploadError, setUploadError] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [sortConfig, setSortConfig] = React.useState({ key: 'roomNumber', direction: 'asc' });
+    const [filter, setFilter] = React.useState('all');
+    const [stats, setStats] = React.useState({
+        total: 0,
+        pending: 0,
+        ready: 0,
+        assigned: 0,
+        bicyclesNeeded: 0
+    });
+
+    React.useEffect(() => {
+        loadSavedArrivals();
+    }, []);
+
+    const loadSavedArrivals = async () => {
+        try {
+            setIsLoading(true);
+            const nextDay = getNextDayDate();
+            
+            const snapshot = await db.collection('arrivalRequests')
+                .where('arrivalDate', '==', nextDay)
+                .orderBy('timestamp', 'desc')
+                .get();
+
+            const loadedArrivals = [];
+            snapshot.forEach(doc => {
+                loadedArrivals.push({ id: doc.id, ...doc.data() });
+            });
+
+            setArrivals(loadedArrivals);
+            updateStatistics(loadedArrivals);
+        } catch (error) {
+            console.error('Error loading arrivals:', error);
+            showNotification('Error loading arrival requests', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateStatistics = (arrivalList) => {
+        const stats = arrivalList.reduce((acc, arrival) => ({
+            total: acc.total + 1,
+            pending: acc.pending + (arrival.status === 'Pending' ? 1 : 0),
+            ready: acc.ready + (arrival.status === 'Ready' ? 1 : 0),
+            assigned: acc.assigned + (arrival.status === 'Assigned' ? 1 : 0),
+            bicyclesNeeded: acc.bicyclesNeeded + 
+                (arrival.bicycleRequest?.adults || 0) + 
+                (arrival.bicycleRequest?.children || 0)
+        }), {
+            total: 0,
+            pending: 0,
+            ready: 0,
+            assigned: 0,
+            bicyclesNeeded: 0
+        });
+
+        setStats(stats);
+    };
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file || file.type !== 'application/pdf') {
+            setUploadError('Please upload a PDF file');
+            return;
+        }
+
+        setIsLoading(true);
+        setUploadError('');
+
+        try {
+            // Process PDF
+            const extractedData = await PDFProcessor.extractText(file);
+            
+            if (!extractedData || extractedData.length === 0) {
+                throw new Error('No valid arrival data found in PDF');
+            }
+
+            // Filter for next day arrivals
+            const nextDay = getNextDayDate();
+            const nextDayArrivals = extractedData.filter(arrival => 
+                arrival.arrivalDate === nextDay
+            );
+
+            if (nextDayArrivals.length === 0) {
+                throw new Error('No arrivals found for tomorrow in the uploaded file');
+            }
+
+            // Store in Firestore
+            const batch = db.batch();
+            const newArrivals = [];
+
+            for (const arrival of nextDayArrivals) {
+                const docRef = db.collection('arrivalRequests').doc();
+                const arrivalData = {
+                    ...arrival,
+                    status: 'Pending',
+                    bicycleRequest: {
+                        adults: 0,
+                        children: 0
+                    },
+                    pdfSource: file.name,
+                    uploadTime: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                batch.set(docRef, arrivalData);
+                newArrivals.push({ id: docRef.id, ...arrivalData });
+            }
+
+            await batch.commit();
+
+            setArrivals(prev => [...prev, ...newArrivals]);
+            updateStatistics([...arrivals, ...newArrivals]);
+            showNotification(`Successfully processed ${newArrivals.length} arrivals for tomorrow`);
+        } catch (error) {
+            console.error('Error processing PDF:', error);
+            setUploadError(error.message || 'Error processing PDF file');
+        } finally {
+            setIsLoading(false);
+            event.target.value = '';
+        }
+    };
+
+    const handleSort = (key) => {
+        setSortConfig(prevConfig => ({
+            key,
+            direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const getSortedArrivals = () => {
+        const sortedArrivals = [...arrivals];
+        const { key, direction } = sortConfig;
+
+        sortedArrivals.sort((a, b) => {
+            if (a[key] < b[key]) return direction === 'asc' ? -1 : 1;
+            if (a[key] > b[key]) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        if (filter !== 'all') {
+            return sortedArrivals.filter(arrival => arrival.status === filter);
+        }
+        
+        return sortedArrivals;
+    };
+
+    const markArrivalReady = async (arrivalId) => {
+        try {
+            setIsLoading(true);
+            await db.collection('arrivalRequests').doc(arrivalId).update({
+                status: 'Ready',
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            const updatedArrivals = arrivals.map(arrival =>
+                arrival.id === arrivalId ? { ...arrival, status: 'Ready' } : arrival
+            );
+
+            setArrivals(updatedArrivals);
+            updateStatistics(updatedArrivals);
+            showNotification('Arrival marked as ready');
+        } catch (error) {
+            console.error('Error updating arrival status:', error);
+            showNotification('Error updating arrival status', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateBicycleRequest = async (arrivalId, adults, children) => {
+        try {
+            setIsLoading(true);
+            await db.collection('arrivalRequests').doc(arrivalId).update({
+                bicycleRequest: { adults, children },
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            const updatedArrivals = arrivals.map(arrival =>
+                arrival.id === arrivalId 
+                    ? { ...arrival, bicycleRequest: { adults, children } }
+                    : arrival
+            );
+
+            setArrivals(updatedArrivals);
+            updateStatistics(updatedArrivals);
+            showNotification('Bicycle request updated');
+        } catch (error) {
+            console.error('Error updating bicycle request:', error);
+            showNotification('Error updating bicycle request', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return React.createElement('div', { className: 'arrival-preparation' },
+        // Statistics Cards
+        React.createElement('div', { className: 'statistics-grid' },
+            React.createElement('div', { className: 'stat-card' },
+                React.createElement('h3', null, "Tomorrow's Arrivals"),
+                React.createElement('p', { className: 'stat-value' }, stats.total)
+            ),
+            React.createElement('div', { className: 'stat-card' },
+                React.createElement('h3', null, 'Pending Preparation'),
+                React.createElement('p', { className: 'stat-value' }, stats.pending)
+            ),
+            React.createElement('div', { className: 'stat-card' },
+                React.createElement('h3', null, 'Ready for Arrival'),
+                React.createElement('p', { className: 'stat-value' }, stats.ready)
+            ),
+            React.createElement('div', { className: 'stat-card' },
+                React.createElement('h3', null, 'Bicycles Needed'),
+                React.createElement('p', { className: 'stat-value' }, stats.bicyclesNeeded)
+            )
+        ),
+
+        // Upload Section
+        React.createElement('div', { className: 'pdf-upload' },
+            React.createElement('div', { className: 'upload-instructions' },
+                React.createElement('h3', null, "Upload Tomorrow's Arrival Report"),
+                React.createElement('p', null, 'Upload PDF file containing arrival information')
+            ),
+            React.createElement('input', {
+                type: 'file',
+                accept: '.pdf',
+                onChange: handleFileUpload,
+                disabled: isLoading,
+                className: 'file-input'
+            }),
+            uploadError && React.createElement('div', { className: 'error' }, uploadError)
+        ),
+
+        // Filter Controls
+        React.createElement('div', { className: 'controls' },
+            React.createElement('select', {
+                value: filter,
+                onChange: (e) => setFilter(e.target.value),
+                className: 'filter-select'
+            },
+                React.createElement('option', { value: 'all' }, 'All Status'),
+                React.createElement('option', { value: 'Pending' }, 'Pending'),
+                React.createElement('option', { value: 'Ready' }, 'Ready'),
+                React.createElement('option', { value: 'Assigned' }, 'Assigned')
+            )
+        ),
+
+        // Arrivals Table
+        React.createElement('div', { className: 'table-container' },
+            React.createElement('table', { className: 'data-table' },
+                React.createElement('thead', null,
+                    React.createElement('tr', null,
+                        React.createElement('th', { 
+                            onClick: () => handleSort('roomNumber'),
+                            className: 'sortable'
+                        }, 'Room'),
+                        React.createElement('th', { 
+                            onClick: () => handleSort('guestName'),
+                            className: 'sortable'
+                        }, 'Guest'),
+                        React.createElement('th', null, 'Bicycle Request'),
+                        React.createElement('th', { 
+                            onClick: () => handleSort('status'),
+                            className: 'sortable'
+                        }, 'Status'),
+                        React.createElement('th', null, 'Actions')
+                    )
+                ),
+                React.createElement('tbody', null,
+                    getSortedArrivals().map(arrival =>
+                        React.createElement('tr', { key: arrival.id },
+                            React.createElement('td', null, arrival.roomNumber),
+                            React.createElement('td', null, arrival.guestName),
+                            React.createElement('td', null,
+                                React.createElement('div', { className: 'bicycle-request' },
+                                    React.createElement('input', {
+                                        type: 'number',
+                                        min: 0,
+                                        value: arrival.bicycleRequest?.adults || 0,
+                                        onChange: (e) => updateBicycleRequest(
+                                            arrival.id,
+                                            parseInt(e.target.value),
+                                            arrival.bicycleRequest?.children || 0
+                                        ),
+                                        className: 'bicycle-input'
+                                    }),
+                                    React.createElement('span', null, 'Adults'),
+                                    React.createElement('input', {
+                                        type: 'number',
+                                        min: 0,
+                                        value: arrival.bicycleRequest?.children || 0,
+                                        onChange: (e) => updateBicycleRequest(
+                                            arrival.id,
+                                            arrival.bicycleRequest?.adults || 0,
+                                            parseInt(e.target.value)
+                                        ),
+                                        className: 'bicycle-input'
+                                    }),
+                                    React.createElement('span', null, 'Children')
+                                )
+                            ),
+                            React.createElement('td', null,
+                                React.createElement('span', {
+                                    className: `status-indicator status-${arrival.status.toLowerCase()}`
+                                }, arrival.status)
+                            ),
+                            React.createElement('td', null,
+                                arrival.status === 'Pending' &&
+                                React.createElement('button', {
+                                    onClick: () => markArrivalReady(arrival.id),
+                                    className: 'ready-btn'
+                                }, 'Mark Ready')
+                            )
+                        )
+                    )
+                )
+            )
+        ),
+
+        // Loading Overlay
+        isLoading && React.createElement('div', { className: 'loading-overlay' },
+            React.createElement('div', { className: 'loading-spinner' })
+        )
+    );
+};
+
+// Initialize the component
+document.addEventListener('DOMContentLoaded', () => {
+    const arrivalRoot = document.getElementById('arrival-preparation-root');
+    if (arrivalRoot) {
+        ReactDOM.createRoot(arrivalRoot).render(React.createElement(ArrivalPreparation));
+    }
+});
+</script>
+<script>
+// PDF Processing Utilities
+const PDFProcessor = {
+    async extractText(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let extractedText = '';
+        
+        try {
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                
+                // Sort items by position for proper text flow
+                const lines = {};
+                textContent.items.forEach(item => {
+                    const y = Math.round(item.transform[5]); // Vertical position
+                    if (!lines[y]) lines[y] = [];
+                    lines[y].push({
+                        text: item.str,
+                        x: item.transform[4] // Horizontal position
+                    });
+                });
+
+                // Sort each line by horizontal position and combine
+                Object.keys(lines)
+                    .sort((a, b) => b - a) // Sort vertically from top to bottom
+                    .forEach(y => {
+                        lines[y].sort((a, b) => a.x - b.x); // Sort horizontally
+                        extractedText += lines[y].map(item => item.text).join(' ') + '\n';
+                    });
+            }
+            
+            return this.parseArrivalData(extractedText);
+        } catch (error) {
+            console.error('Error extracting PDF text:', error);
+            throw new Error('Failed to process PDF content');
+        }
+    },
+
+    parseArrivalData(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        const arrivals = [];
+        let currentArrival = null;
+
+        try {
+            for (const line of lines) {
+                // Room number detection with various formats
+                const roomMatch = line.match(/(?:ROOM|RM)\.?\s*(?:NO\.?|NUMBER)?[:.]?\s*(\d{2,4})/i) ||
+                                line.match(/^(?:NO\.?\s*)?(\d{2,4})\s*$/);
+                
+                if (roomMatch) {
+                    if (currentArrival) {
+                        const validatedArrival = this.validateArrival(currentArrival);
+                        if (validatedArrival) {
+                            arrivals.push(validatedArrival);
+                        }
+                    }
+                    currentArrival = {
+                        roomNumber: roomMatch[1].padStart(3, '0'),
+                        guestName: '',
+                        arrivalDate: '',
+                        departureDate: '',
+                        adults: 0,
+                        children: 0
+                    };
+                    continue;
+                }
+
+                if (!currentArrival) continue;
+
+                // Guest name detection
+                const nameMatch = line.match(/(?:GUEST|NAME|GUEST NAME)[:.]?\s*(.+)/i) ||
+                                line.match(/^(?:MR|MRS|MS|DR)\.?\s+(.+)/i);
+                if (nameMatch) {
+                    currentArrival.guestName = nameMatch[1].trim()
+                        .replace(/\s+/g, ' ')
+                        .replace(/[^\w\s\-']/g, '');
+                    continue;
+                }
+
+                // Date detection
+                const arrivalMatch = line.match(/(?:ARRIVAL|CHECK[\s-]?IN)[:.]?\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})/i);
+                const departureMatch = line.match(/(?:DEPARTURE|CHECK[\s-]?OUT)[:.]?\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})/i);
+                
+                if (arrivalMatch) {
+                    currentArrival.arrivalDate = this.formatDate(arrivalMatch[1]);
+                }
+                if (departureMatch) {
+                    currentArrival.departureDate = this.formatDate(departureMatch[1]);
+                }
+
+                // Guest count detection
+                const adultMatch = line.match(/(?:ADULTS?|PERSONS?)[:.]?\s*(\d+)/i);
+                const childMatch = line.match(/(?:CHILD(?:REN)?|KIDS?)[:.]?\s*(\d+)/i);
+
+                if (adultMatch) {
+                    currentArrival.adults = parseInt(adultMatch[1]);
+                }
+                if (childMatch) {
+                    currentArrival.children = parseInt(childMatch[1]);
+                }
+            }
+
+            // Don't forget the last arrival
+            if (currentArrival) {
+                const validatedArrival = this.validateArrival(currentArrival);
+                if (validatedArrival) {
+                    arrivals.push(validatedArrival);
+                }
+            }
+
+            return this.postProcessArrivals(arrivals);
+        } catch (error) {
+            console.error('Error parsing arrival data:', error);
+            throw new Error('Failed to parse arrival information');
+        }
+    },
+
+    validateArrival(arrival) {
+        try {
+            // Basic validation
+            if (!arrival.roomNumber || !arrival.guestName || !arrival.arrivalDate) {
+                console.warn(`Incomplete arrival data for room ${arrival.roomNumber}`);
+                return null;
+            }
+
+            // Room number validation
+            if (!/^\d{3,4}$/.test(arrival.roomNumber)) {
+                console.warn(`Invalid room number format: ${arrival.roomNumber}`);
+                return null;
+            }
+
+            // Date validation
+            if (!this.isValidDate(arrival.arrivalDate)) {
+                console.warn(`Invalid arrival date for room ${arrival.roomNumber}`);
+                return null;
+            }
+
+            // Guest name validation
+            if (arrival.guestName.length < 2 || /^\d+$/.test(arrival.guestName)) {
+                console.warn(`Invalid guest name for room ${arrival.roomNumber}`);
+                return null;
+            }
+
+            // Ensure numeric values for guest counts
+            arrival.adults = parseInt(arrival.adults) || 0;
+            arrival.children = parseInt(arrival.children) || 0;
+
+            return {
+                ...arrival,
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                status: 'Pending',
+                timestamp: new Date().toISOString(),
+                bicycleRequest: {
+                    adults: arrival.adults,
+                    children: arrival.children
+                }
+            };
+        } catch (error) {
+            console.error('Error validating arrival:', error);
+            return null;
+        }
+    },
+
+    postProcessArrivals(arrivals) {
+        // Remove duplicates based on room number
+        const uniqueArrivals = Array.from(
+            new Map(arrivals.map(item => [item.roomNumber, item])).values()
+        );
+
+        // Sort by room number
+        return uniqueArrivals.sort((a, b) => 
+            parseInt(a.roomNumber) - parseInt(b.roomNumber)
+        );
+    },
+
+    formatDate(dateStr) {
+        try {
+            const cleanDate = dateStr.replace(/[^\d\/\-\.]/g, '');
+            let parts;
+
+            if (cleanDate.includes('/')) {
+                parts = cleanDate.split('/');
+            } else if (cleanDate.includes('-')) {
+                parts = cleanDate.split('-');
+            } else if (cleanDate.includes('.')) {
+                parts = cleanDate.split('.');
+            } else {
+                throw new Error('Invalid date separator');
+            }
+
+            if (parts.length !== 3) {
+                throw new Error('Invalid date format');
+            }
+
+            let [day, month, year] = parts.map(part => part.trim());
+
+            // Handle 2-digit year
+            if (year.length === 2) {
+                const currentYear = new Date().getFullYear();
+                const century = Math.floor(currentYear / 100) * 100;
+                year = century + parseInt(year);
+            }
+
+            // Validate ranges
+            day = parseInt(day);
+            month = parseInt(month);
+            year = parseInt(year);
+
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                throw new Error('Invalid date components');
+            }
+
+            if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2000 || year > 2100) {
+                throw new Error('Date components out of range');
+            }
+
+            // Format to YYYY-MM-DD
+            return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        } catch (error) {
+            console.error('Error formatting date:', dateStr, error);
+            return null;
+        }
+    },
+
+    isValidDate(dateString) {
+        const date = new Date(dateString);
+        return date instanceof Date && !isNaN(date) && 
+               date > new Date(2000, 0, 1) && 
+               date < new Date(2100, 11, 31);
+    }
+};
+
+// Initialize PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+</script>
