@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';</script>
 
     <style>
         /* Base Styles */
@@ -52,51 +53,74 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .departure-item.priority-high {
-            border-left-color: #f44336;
-            background-color: #fff5f5;
-        }
-
         /* Tab System Styles */
         .tab-container {
-            margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
         }
 
         .tab-buttons {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
         }
 
         .tab-button {
-            padding: 12px 24px;
-            background-color: #f0f0f0;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            cursor: pointer;
         }
 
         .tab-button:hover {
-            background-color: #e0e0e0;
+            background: #e0e0e0;
+            transform: translateY(-2px);
         }
 
         .tab-button.active {
-            background-color: #4CAF50;
+            background: #4CAF50;
             color: white;
-            box-shadow: 0 2px 4px rgba(76,175,80,0.3);
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2);
         }
 
         .tab-content {
             display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .tab-content.active {
             display: block;
+            opacity: 1;
         }
 
-        /* Form and Input Styles */
+        /* Form and Section Styles */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
         .form-section {
             background-color: white;
             padding: 20px;
@@ -123,6 +147,7 @@
             color: #333;
         }
 
+        /* Input Styles */
         input[type="text"],
         input[type="date"],
         input[type="number"],
@@ -142,6 +167,11 @@
         }
 
         /* Button Styles */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
         button {
             padding: 10px 20px;
             border: none;
@@ -169,14 +199,17 @@
         .return-btn { background-color: #4CAF50; color: white; }
 
         /* Table Styles */
+        .data-table {
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
         }
 
         th, td {
@@ -186,16 +219,16 @@
         }
 
         th {
-            background-color: #4CAF50;
+            background: #4CAF50;
             color: white;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         tr:hover {
-            background-color: #f5f5f5;
+            background: #f5f5f5;
         }
 
-        /* Status Indicators */
+        /* Status Styles */
         .status-ready {
             background-color: #e8f5e9;
             color: #2e7d32;
@@ -303,7 +336,10 @@
 
     <!-- Today's Departures Section -->
     <div id="todayDepartures" class="departure-notice">
-        <h3>Today's Bicycle Collections</h3>
+        <div class="section-header">
+            <div class="section-title">Today's Priority Collections</div>
+            <button class="print-btn" onclick="printDepartures()">Print List</button>
+        </div>
         <div id="departuresList"></div>
     </div>
 
@@ -318,6 +354,9 @@
 
     <!-- Bicycle Issuing Tab -->
     <div id="issuingTab" class="tab-content active">
+        <div class="section-header no-print">
+            <div class="section-title">Search Records</div>
+        </div>
         <div class="search-section no-print">
             <div class="form-grid">
                 <div class="form-group">
@@ -328,16 +367,17 @@
                     <input type="text" id="roomSearch" placeholder="Search by Room Number...">
                     <button onclick="searchByRoom()" class="primary-btn">Search Room</button>
                 </div>
-                <div class="form-group">
+                <div class="form-group action-buttons">
                     <button onclick="resetSearch()" class="primary-btn">Reset Search</button>
-                    <button class="print-btn" onclick="printDepartures()">Print Today's Departures</button>
                     <button class="print-btn" onclick="printRecords()">Print Active Records</button>
                 </div>
             </div>
         </div>
 
         <form id="bicycleForm" class="form-section no-print">
-            <h2>Issue Bicycle</h2>
+            <div class="section-header">
+                <div class="section-title">Issue New Bicycle</div>
+            </div>
             <input type="hidden" id="editIndex">
             
             <div class="form-grid">
@@ -381,42 +421,55 @@
                 </div>
             </div>
             
-            <button type="submit" class="primary-btn">Save Record</button>
+            <div class="action-buttons">
+                <button type="submit" class="primary-btn">Save Record</button>
+                <button type="reset" class="edit-btn">Clear Form</button>
+            </div>
         </form>
 
-        <table id="recordsTable">
-            <thead>
-                <tr>
-                    <th>Room Number</th>
-                    <th>Guest Name</th>
-                    <th>Issue Date</th>
-                    <th>Departure Date</th>
-                    <th>Bicycle Number</th>
-                    <th>Status</th>
-                    <th class="no-print">Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="data-table">
+            <div class="section-header">
+                <div class="section-title">Active Bicycle Records</div>
+            </div>
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>Room Number</th>
+                        <th>Guest Name</th>
+                        <th>Issue Date</th>
+                        <th>Departure Date</th>
+                        <th>Bicycle Number</th>
+                        <th>Status</th>
+                        <th class="no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Faulty Bicycles Tab -->
     <div id="faultyTab" class="tab-content">
+        <div class="section-header no-print">
+            <div class="section-title">Search Faulty Bicycles</div>
+        </div>
         <div class="search-section no-print">
             <div class="form-grid">
                 <div class="form-group">
                     <input type="text" id="faultyBicycleSearch" placeholder="Search faulty bicycle number...">
                     <button onclick="searchFaultyBicycle()" class="primary-btn">Search</button>
                 </div>
-                <div class="form-group">
+                <div class="form-group action-buttons">
                     <button onclick="resetFaultySearch()" class="primary-btn">Reset</button>
-                    <button class="print-btn" onclick="printFaultyBicycles()">Print Faulty Bicycles</button>
+                    <button class="print-btn" onclick="printFaultyBicycles()">Print Faulty List</button>
                 </div>
             </div>
         </div>
 
         <form id="faultyBicycleForm" class="form-section no-print">
-            <h2>Report Faulty Bicycle</h2>
+            <div class="section-header">
+                <div class="section-title">Report Faulty Bicycle</div>
+            </div>
             <input type="hidden" id="faultyEditIndex">
             
             <div class="form-grid">
@@ -464,69 +517,91 @@
                 </div>
             </div>
             
-            <button type="submit" class="primary-btn">Report Issue</button>
+            <div class="action-buttons">
+                <button type="submit" class="primary-btn">Report Issue</button>
+                <button type="reset" class="edit-btn">Clear Form</button>
+            </div>
         </form>
 
-        <table id="faultyBicycleTable">
-            <thead>
-                <tr>
-                    <th>Bicycle Number</th>
-                    <th>Issue Description</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Reported Date</th>
-                    <th>Est. Repair Time</th>
-                    <th class="no-print">Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="data-table">
+            <div class="section-header">
+                <div class="section-title">Active Faulty Bicycles</div>
+            </div>
+            <table id="faultyBicycleTable">
+                <thead>
+                    <tr>
+                        <th>Bicycle Number</th>
+                        <th>Issue Description</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Reported Date</th>
+                        <th>Est. Repair Time</th>
+                        <th class="no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Bicycle Arrangement Tab -->
     <div id="arrangementTab" class="tab-content">
+        <div class="section-header">
+            <div class="section-title">Flight Arrival Information</div>
+            <div class="action-buttons">
+                <button class="print-btn" onclick="printArrangements()">Print Arrangements</button>
+            </div>
+        </div>
+
         <div class="upload-section no-print">
-            <h2>Upload Flight Arrival Information</h2>
             <div class="form-group">
+                <label for="pdfUpload">Upload Flight Arrival PDF:</label>
                 <input type="file" id="pdfUpload" accept=".pdf" onchange="handlePDFUpload(event)">
-                <p>Upload PDF containing flight arrival information</p>
+                <p class="help-text">Upload PDF containing flight arrival information</p>
             </div>
         </div>
 
         <div class="search-section no-print">
             <div class="form-grid">
                 <div class="form-group">
+                    <label for="arrangementDate">Filter by Date:</label>
                     <input type="date" id="arrangementDate" onchange="filterArrangements()">
-                    <button onclick="filterArrangements()" class="primary-btn">Filter by Date</button>
                 </div>
-                <div class="form-group">
-                    <button onclick="resetArrangementFilter()" class="primary-btn">Reset</button>
-                    <button class="print-btn" onclick="printArrangements()">Print Arrangements</button>
+                <div class="form-group action-buttons">
+                    <button onclick="resetArrangementFilter()" class="primary-btn">Reset Filter</button>
                 </div>
             </div>
         </div>
 
-        <table id="arrangementTable">
-            <thead>
-                <tr>
-                    <th>Room Number</th>
-                    <th>Guest Name</th>
-                    <th>Arrival Date</th>
-                    <th>Departure Date</th>
-                    <th>Bicycle Type</th>
-                    <th>Bicycle Number</th>
-                    <th>Status</th>
-                    <th class="no-print">Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="data-table">
+            <div class="section-header">
+                <div class="section-title">Upcoming Arrangements</div>
+            </div>
+            <table id="arrangementTable">
+                <thead>
+                    <tr>
+                        <th>Room Number</th>
+                        <th>Guest Name</th>
+                        <th>Arrival Date</th>
+                        <th>Departure Date</th>
+                        <th>Bicycle Type</th>
+                        <th>Bicycle Number</th>
+                        <th>Status</th>
+                        <th class="no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Notification div -->
     <div id="notification" class="notification"></div>
 
+<script>
+</script>
 </body>
+</html>
 <script>
 // Firebase Configuration
 const firebaseConfig = {
@@ -542,7 +617,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Global Variables and State Management
+// Global Variables and State
 let records = [];
 let faultyBicycles = [];
 let arrangements = [];
@@ -571,16 +646,56 @@ const bicycleInventory = {
     }))
 };
 
+// Firebase Collections Setup
+async function initializeFirebaseCollections() {
+    try {
+        // Create indexes for bicycleRecords
+        await db.collection('bicycleRecords')
+            .where('status', '==', 'Active')
+            .where('departureDate', '>=', new Date().toISOString().split('T')[0])
+            .get();
+
+        // Create indexes for faultyBicycles
+        await db.collection('faultyBicycles')
+            .where('status', '==', 'Under Repair')
+            .orderBy('priority', 'desc')
+            .get();
+
+        // Create indexes for arrangements
+        await db.collection('arrangements')
+            .where('status', '==', 'Pending')
+            .orderBy('arrivalDate', 'asc')
+            .get();
+
+        console.log('Firebase collections initialized successfully');
+    } catch (error) {
+        console.error('Error initializing Firebase collections:', error);
+    }
+}
+
 // Utility Functions
 function formatDate(dateString) {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString();
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+function formatDateForInput(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
 }
 
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
     notification.textContent = message;
-    notification.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+    notification.style.backgroundColor = type === 'success' ? '#4CAF50' : 
+                                      type === 'error' ? '#f44336' : 
+                                      type === 'info' ? '#2196F3' : '#ff9800';
     notification.style.display = 'block';
     setTimeout(() => {
         notification.style.display = 'none';
@@ -588,10 +703,20 @@ function showNotification(message, type = 'success') {
 }
 
 function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+        tab.style.display = 'none';
+    });
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    const selectedTab = document.getElementById(tabName + 'Tab');
+    const selectedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+    
+    selectedTab.classList.add('active');
+    selectedTab.style.display = 'block';
+    selectedButton.classList.add('active');
 }
 
 // Bicycle Inventory Functions
@@ -615,17 +740,32 @@ function updateBicycleInventory() {
         }
     });
 
+    // Mark arranged bicycles as unavailable
+    arrangements.forEach(arr => {
+        if (arr.status === 'Ready' || arr.status === 'Issued') {
+            markBicycleUnavailable(arr.bicycleNumber);
+        }
+    });
+
     // Update all dropdowns
     updateAllBicycleDropdowns();
 }
 
 function markBicycleUnavailable(bicycleNumber) {
+    if (!bicycleNumber) return;
+
     Object.keys(bicycleInventory).forEach(type => {
-        const bike = bicycleInventory[type].find(b => b.number === bicycleNumber);
-        if (bike) {
-            bike.available = false;
+        const bikeIndex = bicycleInventory[type].findIndex(b => b.number === bicycleNumber);
+        if (bikeIndex !== -1) {
+            bicycleInventory[type][bikeIndex].available = false;
         }
     });
+}
+
+function updateAllBicycleDropdowns() {
+    updateBicycleNumberOptions();
+    updateFaultyBicycleNumbers();
+    displayArrangements(); // This will update arrangement dropdowns
 }
 
 function updateBicycleNumberOptions() {
@@ -654,110 +794,106 @@ function updateFaultyBicycleNumbers() {
     
     if (!selectedType) return;
 
-    // For faulty bicycles, show all bikes of the selected type, regardless of availability
+    // For faulty bicycles, show all bikes of the selected type
     bicycleInventory[selectedType].forEach(bike => {
         const option = new Option(bike.number, bike.number);
+        if (!bike.available) {
+            option.style.color = '#999';
+            option.text += ' (In Use)';
+        }
         numberSelect.add(option);
     });
 }
 
-// Today's Departures Functions
-function displayTodayDepartures() {
-    const today = new Date().toISOString().split('T')[0];
-    const departingToday = records.filter(record => 
-        record.departureDate === today && 
-        record.status !== 'Returned'
-    );
-
-    const departuresDiv = document.getElementById('todayDepartures');
-    const departuresList = document.getElementById('departuresList');
-
-    if (departingToday.length > 0) {
-        departuresDiv.style.display = 'block';
-        departuresList.innerHTML = `
-            <h3>Priority Collections for Today (${departingToday.length} bicycles)</h3>
-            ${departingToday.map(record => `
-                <div class="departure-item priority-high">
-                    <div>
-                        <strong>Room ${record.roomNumber}</strong> - ${record.guestName}
-                        <br>
-                        Bicycle: ${record.bicycleNumber}
-                    </div>
-                    <button class="return-btn" onclick="markAsReturned('${record.id}')">
-                        Collect & Return
-                    </button>
-                </div>
-            `).join('')}
-        `;
-    } else {
-        departuresDiv.style.display = 'none';
+// Data Loading Functions
+async function loadAllData() {
+    try {
+        await Promise.all([
+            loadRecords(),
+            loadFaultyBicycles(),
+            loadArrangements()
+        ]);
+        updateBicycleInventory();
+        showNotification('All data loaded successfully', 'info');
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showNotification('Error loading data', 'error');
     }
 }
 
-// Load Records Function
-function loadRecords() {
-    db.collection('bicycleRecords')
-        .orderBy('timestamp', 'desc')
-        .get()
-        .then((snapshot) => {
-            records = [];
-            snapshot.forEach((doc) => {
-                records.push({ id: doc.id, ...doc.data() });
-            });
-            displayRecords();
-            displayTodayDepartures();
-            updateBicycleInventory();
-        })
-        .catch((error) => {
-            console.error("Error loading records: ", error);
-            showNotification('Error loading records', 'error');
-        });
-}
-
-// Load Faulty Bicycles Function
-function loadFaultyBicycles() {
-    db.collection('faultyBicycles')
-        .orderBy('timestamp', 'desc')
-        .get()
-        .then((snapshot) => {
-            faultyBicycles = [];
-            snapshot.forEach((doc) => {
-                faultyBicycles.push({ id: doc.id, ...doc.data() });
-            });
-            displayFaultyBicycles();
-            updateBicycleInventory();
-        })
-        .catch((error) => {
-            console.error("Error loading faulty bicycles: ", error);
-            showNotification('Error loading faulty bicycles', 'error');
-        });
-}
 </script>
 <script>
-// Display Functions
+// Record Management Functions
+async function loadRecords() {
+    try {
+        const snapshot = await db.collection('bicycleRecords')
+            .orderBy('timestamp', 'desc')
+            .get();
+        
+        records = [];
+        snapshot.forEach((doc) => {
+            records.push({ id: doc.id, ...doc.data() });
+        });
+        
+        displayRecords();
+        displayTodayDepartures();
+        return true;
+    } catch (error) {
+        console.error("Error loading records:", error);
+        showNotification('Error loading records', 'error');
+        return false;
+    }
+}
+
 function displayRecords(recordsToShow = records) {
     const table = document.getElementById('recordsTable').getElementsByTagName('tbody')[0];
     table.innerHTML = '';
     
     recordsToShow.forEach((record, index) => {
         const row = table.insertRow();
-        const statusClass = record.status === 'Returned' ? 'status-returned' : '';
+        const statusClass = record.status.toLowerCase().replace(' ', '-');
+        
         row.innerHTML = `
             <td>${record.roomNumber}</td>
             <td>${record.guestName}</td>
             <td>${formatDate(record.issueDate)}</td>
             <td>${formatDate(record.departureDate)}</td>
             <td>${record.bicycleNumber}</td>
-            <td class="${statusClass}">${record.status || 'Active'}</td>
+            <td class="status-${statusClass}">${record.status}</td>
             <td class="no-print">
                 ${record.status !== 'Returned' ? `
-                    <button class="edit-btn" onclick="editRecord(${index})">Edit</button>
-                    <button class="return-btn" onclick="markAsReturned('${record.id}')">Return</button>
-                    <button class="delete-btn" onclick="deleteRecord('${record.id}')">Delete</button>
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="editRecord(${index})">Edit</button>
+                        <button class="return-btn" onclick="markAsReturned('${record.id}')">Return</button>
+                        <button class="delete-btn" onclick="deleteRecord('${record.id}')">Delete</button>
+                    </div>
                 ` : ''}
             </td>
         `;
     });
+}
+
+async function loadFaultyBicycles() {
+    try {
+        const snapshot = await db.collection('faultyBicycles')
+            .where('status', '!=', 'Fixed')
+            .orderBy('status')
+            .orderBy('priority')
+            .orderBy('timestamp', 'desc')
+            .get();
+        
+        faultyBicycles = [];
+        snapshot.forEach((doc) => {
+            faultyBicycles.push({ id: doc.id, ...doc.data() });
+        });
+        
+        displayFaultyBicycles();
+        return true;
+    } catch (error) {
+        console.error("Error loading faulty bicycles:", error);
+        showNotification('Error loading faulty bicycles', 'error');
+        return false;
+    }
 }
 
 function displayFaultyBicycles(bicyclesToShow = faultyBicycles) {
@@ -767,18 +903,21 @@ function displayFaultyBicycles(bicyclesToShow = faultyBicycles) {
     bicyclesToShow.forEach((bicycle, index) => {
         const row = table.insertRow();
         row.classList.add(`priority-${bicycle.priority}`);
+        
         row.innerHTML = `
             <td>${bicycle.bicycleNumber}</td>
             <td>${bicycle.issueDescription}</td>
-            <td>${bicycle.priority.toUpperCase()}</td>
+            <td class="status-${bicycle.priority}">${bicycle.priority.toUpperCase()}</td>
             <td>${bicycle.status}</td>
             <td>${formatDate(bicycle.reportedDate)}</td>
             <td>${bicycle.estimatedRepairTime} days</td>
             <td class="no-print">
                 ${bicycle.status !== 'Fixed' ? `
-                    <button class="edit-btn" onclick="editFaultyBicycle(${index})">Edit</button>
-                    <button class="return-btn" onclick="markAsFixed('${bicycle.id}')">Mark Fixed</button>
-                    <button class="primary-btn" onclick="viewMaintenanceHistory('${bicycle.id}')">History</button>
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="editFaultyBicycle(${index})">Edit</button>
+                        <button class="return-btn" onclick="markAsFixed('${bicycle.id}')">Mark Fixed</button>
+                        <button class="primary-btn" onclick="viewMaintenanceHistory('${bicycle.id}')">History</button>
+                    </div>
                 ` : `
                     <button class="primary-btn" onclick="viewMaintenanceHistory('${bicycle.id}')">View History</button>
                 `}
@@ -787,85 +926,167 @@ function displayFaultyBicycles(bicyclesToShow = faultyBicycles) {
     });
 }
 
+// PDF Processing Functions
+async function handlePDFUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        showNotification('Processing PDF...', 'info');
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        
+        arrangements = []; // Clear existing arrangements
+        
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const text = textContent.items.map(item => item.str.trim()).join(' ');
+            
+            // Process text content
+            const lines = text.split(/[\n\r]+/).filter(line => line.trim());
+            let currentArrangement = {};
+            
+            lines.forEach(line => {
+                // Adjust these patterns based on your PDF format
+                const roomMatch = line.match(/Room[:\s]+(\d+)/i);
+                const nameMatch = line.match(/Guest[:\s]+([^|]+?)(?=\s*(?:Room|Arrival|Departure|$))/i);
+                const arrivalMatch = line.match(/Arrival[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{4}|\d{4}[-/]\d{1,2}[-/]\d{1,2})/i);
+                const departureMatch = line.match(/Departure[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{4}|\d{4}[-/]\d{1,2}[-/]\d{1,2})/i);
+
+                if (roomMatch) currentArrangement.roomNumber = roomMatch[1];
+                if (nameMatch) currentArrangement.guestName = nameMatch[1].trim();
+                if (arrivalMatch) currentArrangement.arrivalDate = formatDateFromPDF(arrivalMatch[1]);
+                if (departureMatch) {
+                    currentArrangement.departureDate = formatDateFromPDF(departureMatch[1]);
+                    
+                    if (isValidArrangement(currentArrangement)) {
+                        arrangements.push({
+                            ...currentArrangement,
+                            bicycleType: '',
+                            bicycleNumber: '',
+                            status: 'Pending',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        currentArrangement = {};
+                    }
+                }
+            });
+        }
+
+        await saveArrangementsToFirebase();
+        displayArrangements();
+        showNotification(`Successfully processed ${arrangements.length} arrangements`, 'success');
+        
+    } catch (error) {
+        console.error('Error processing PDF:', error);
+        showNotification('Error processing PDF file', 'error');
+    }
+}
+
+function isValidArrangement(arrangement) {
+    return arrangement.roomNumber &&
+           arrangement.guestName &&
+           arrangement.arrivalDate &&
+           arrangement.departureDate;
+}
+
+function formatDateFromPDF(dateStr) {
+    const parts = dateStr.split(/[-/]/);
+    // Handle both DD/MM/YYYY and YYYY/MM/DD formats
+    if (parts[0].length === 4) {
+        // YYYY/MM/DD format
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    } else {
+        // DD/MM/YYYY format
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+}
+
+async function saveArrangementsToFirebase() {
+    try {
+        const batch = db.batch();
+        
+        arrangements.forEach(arrangement => {
+            const docRef = db.collection('arrangements').doc();
+            batch.set(docRef, arrangement);
+        });
+
+        await batch.commit();
+        showNotification('Arrangements saved successfully');
+        return true;
+    } catch (error) {
+        console.error('Error saving arrangements:', error);
+        showNotification('Error saving arrangements', 'error');
+        return false;
+    }
+}
+
 function displayArrangements(arrangementsToShow = arrangements) {
     const table = document.getElementById('arrangementTable').getElementsByTagName('tbody')[0];
     table.innerHTML = '';
 
-    arrangementsToShow.forEach((arrangement, index) => {
-        const row = table.insertRow();
-        row.innerHTML = `
-            <td>${arrangement.roomNumber}</td>
-            <td>${arrangement.guestName}</td>
-            <td>${formatDate(arrangement.arrivalDate)}</td>
-            <td>${formatDate(arrangement.departureDate)}</td>
-            <td>
-                <select onchange="updateArrangementBicycleType(${index}, this.value)" 
-                        class="bicycle-select" 
-                        ${arrangement.status === 'Issued' ? 'disabled' : ''}>
-                    <option value="">Select Type</option>
-                    <option value="adult" ${arrangement.bicycleType === 'adult' ? 'selected' : ''}>Adult Bicycle</option>
-                    <option value="kids16" ${arrangement.bicycleType === 'kids16' ? 'selected' : ''}>Kids 16"</option>
-                    <option value="kids18" ${arrangement.bicycleType === 'kids18' ? 'selected' : ''}>Kids 18"</option>
-                    <option value="kids20" ${arrangement.bicycleType === 'kids20' ? 'selected' : ''}>Kids 20"</option>
-                    <option value="libero" ${arrangement.bicycleType === 'libero' ? 'selected' : ''}>Libero</option>
-                </select>
-            </td>
-            <td>
-                ${getAvailableBicyclesSelect(arrangement.bicycleType, arrangement.bicycleNumber, index, arrangement.status === 'Issued')}
-            </td>
-            <td class="status-${arrangement.status.toLowerCase()}">${arrangement.status}</td>
-            <td class="no-print">
-                ${arrangement.status === 'Pending' && arrangement.bicycleNumber ? `
-                    <button class="primary-btn" onclick="markBicycleReady(${index})">Mark Ready</button>
-                ` : arrangement.status === 'Ready' ? `
-                    <button class="return-btn" onclick="markBicycleIssued(${index})">Issue Bicycle</button>
-                ` : ''}
-            </td>
-        `;
-    });
-}
-
-// Form Handling Functions
-function updateArrangementBicycleType(index, type) {
-    arrangements[index].bicycleType = type;
-    arrangements[index].bicycleNumber = '';
-    displayArrangements();
-}
-
-function getAvailableBicyclesSelect(type, currentBicycle, index, disabled = false) {
-    if (!type) return '';
-
-    let options = ['<option value="">Select Number</option>'];
-    bicycleInventory[type]
-        .filter(bike => bike.available || bike.number === currentBicycle)
-        .forEach(bike => {
-            options.push(`<option value="${bike.number}" ${currentBicycle === bike.number ? 'selected' : ''}>${bike.number}</option>`);
+    arrangementsToShow
+        .sort((a, b) => new Date(a.arrivalDate) - new Date(b.arrivalDate))
+        .forEach((arrangement, index) => {
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td>${arrangement.roomNumber}</td>
+                <td>${arrangement.guestName}</td>
+                <td>${formatDate(arrangement.arrivalDate)}</td>
+                <td>${formatDate(arrangement.departureDate)}</td>
+                <td>
+                    <select onchange="updateArrangementBicycleType(${index}, this.value)" 
+                            class="bicycle-select" 
+                            ${arrangement.status === 'Issued' ? 'disabled' : ''}>
+                        <option value="">Select Type</option>
+                        <option value="adult" ${arrangement.bicycleType === 'adult' ? 'selected' : ''}>Adult Bicycle</option>
+                        <option value="kids16" ${arrangement.bicycleType === 'kids16' ? 'selected' : ''}>Kids 16"</option>
+                        <option value="kids18" ${arrangement.bicycleType === 'kids18' ? 'selected' : ''}>Kids 18"</option>
+                        <option value="kids20" ${arrangement.bicycleType === 'kids20' ? 'selected' : ''}>Kids 20"</option>
+                        <option value="libero" ${arrangement.bicycleType === 'libero' ? 'selected' : ''}>Libero</option>
+                    </select>
+                    ${getAvailableBicyclesSelect(arrangement.bicycleType, arrangement.bicycleNumber, index, arrangement.status === 'Issued')}
+                </td>
+                <td class="status-${arrangement.status.toLowerCase()}">${arrangement.status}</td>
+                <td class="no-print">
+                    ${getBicycleStatusButtons(arrangement, index)}
+                </td>
+            `;
         });
-
-    return `
-        <select onchange="updateArrangementBicycleNumber(${index}, this.value)" 
-                class="bicycle-select"
-                ${disabled ? 'disabled' : ''}>
-            ${options.join('')}
-        </select>
-    `;
 }
 
-function updateArrangementBicycleNumber(index, number) {
-    arrangements[index].bicycleNumber = number;
-    displayArrangements();
+function getBicycleStatusButtons(arrangement, index) {
+    switch(arrangement.status) {
+        case 'Pending':
+            return arrangement.bicycleNumber ? 
+                `<button class="primary-btn" onclick="markBicycleReady(${index})">Mark Ready</button>` : '';
+        case 'Ready':
+            return `<button class="return-btn" onclick="markBicycleIssued(${index})">Issue Bicycle</button>`;
+        case 'Issued':
+            return `<button class="edit-btn" onclick="viewArrangementDetails('${arrangement.id}')">View Details</button>`;
+        default:
+            return '';
+    }
 }
 
-// Bicycle Record Form Handling
+</script>
+<script>
+// Form Handling and Validation
 const bicycleForm = document.getElementById('bicycleForm');
-bicycleForm.addEventListener('submit', function(e) {
+bicycleForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    if (!validateBicycleForm()) {
+        return;
+    }
+
     const record = {
         roomNumber: document.getElementById('roomNumber').value,
         guestName: document.getElementById('guestName').value,
         issueDate: document.getElementById('issueDate').value,
         departureDate: document.getElementById('departureDate').value,
+        bicycleType: document.getElementById('bicycleType').value,
         bicycleNumber: document.getElementById('bicycleNumber').value,
         status: 'Active',
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -873,130 +1094,113 @@ bicycleForm.addEventListener('submit', function(e) {
 
     const editIndex = document.getElementById('editIndex').value;
 
-    if (editIndex !== '') {
-        // Update existing record
-        const docId = records[editIndex].id;
-        db.collection('bicycleRecords').doc(docId).update(record)
-            .then(() => {
-                showNotification('Record updated successfully');
-                bicycleForm.reset();
-                document.getElementById('editIndex').value = '';
-                loadRecords();
-            })
-            .catch((error) => {
-                console.error("Error updating record: ", error);
-                showNotification('Error updating record', 'error');
-            });
-    } else {
-        // Add new record
-        db.collection('bicycleRecords').add(record)
-            .then(() => {
-                showNotification('Record added successfully');
-                bicycleForm.reset();
-                loadRecords();
-            })
-            .catch((error) => {
-                console.error("Error adding record: ", error);
-                showNotification('Error adding record', 'error');
-            });
+    try {
+        if (editIndex !== '') {
+            await updateBicycleRecord(record, records[editIndex].id);
+            document.getElementById('editIndex').value = '';
+        } else {
+            await addBicycleRecord(record);
+        }
+        
+        bicycleForm.reset();
+        showNotification('Record saved successfully');
+        await loadRecords();
+    } catch (error) {
+        console.error("Error saving record:", error);
+        showNotification('Error saving record', 'error');
     }
 });
 
-// Faulty Bicycle Form Handling
-const faultyForm = document.getElementById('faultyBicycleForm');
-faultyForm.addEventListener('submit', function(e) {
+function validateBicycleForm() {
+    const issueDate = new Date(document.getElementById('issueDate').value);
+    const departureDate = new Date(document.getElementById('departureDate').value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (issueDate < today) {
+        showNotification('Issue date cannot be in the past', 'error');
+        return false;
+    }
+
+    if (departureDate <= issueDate) {
+        showNotification('Departure date must be after issue date', 'error');
+        return false;
+    }
+
+    if (!document.getElementById('bicycleNumber').value) {
+        showNotification('Please select a bicycle number', 'error');
+        return false;
+    }
+
+    return true;
+}
+
+const faultyBicycleForm = document.getElementById('faultyBicycleForm');
+faultyBicycleForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    if (!validateFaultyBicycleForm()) {
+        return;
+    }
+
     const faultyBicycle = {
+        bicycleType: document.getElementById('faultyBicycleType').value,
         bicycleNumber: document.getElementById('faultyBicycleNumber').value,
         issueDescription: document.getElementById('issueDescription').value,
         priority: document.getElementById('priority').value,
-        estimatedRepairTime: document.getElementById('estimatedRepairTime').value,
+        estimatedRepairTime: parseInt(document.getElementById('estimatedRepairTime').value),
         maintenanceNotes: document.getElementById('maintenanceNotes').value,
         status: 'Under Repair',
         reportedDate: new Date().toISOString(),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         history: [{
             date: new Date().toISOString(),
             action: 'Reported',
             notes: document.getElementById('maintenanceNotes').value
-        }]
+        }],
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    const editIndex = document.getElementById('faultyEditIndex').value;
-
-    if (editIndex !== '') {
-        // Update existing faulty record
-        updateFaultyBicycle(faultyBicycle, editIndex);
-    } else {
-        // Add new faulty record
-        addFaultyBicycle(faultyBicycle);
+    try {
+        await addFaultyBicycle(faultyBicycle);
+        faultyBicycleForm.reset();
+        showNotification('Faulty bicycle reported successfully');
+        await loadFaultyBicycles();
+    } catch (error) {
+        console.error("Error reporting faulty bicycle:", error);
+        showNotification('Error reporting faulty bicycle', 'error');
     }
 });
 
-// PDF Processing Function
-function handlePDFUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const typedarray = new Uint8Array(e.target.result);
-            
-            pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
-                arrangements = []; // Clear existing arrangements
-                let currentPage = 1;
-                
-                function processPage(pageNumber) {
-                    pdf.getPage(pageNumber).then(function(page) {
-                        page.getTextContent().then(function(textContent) {
-                            const text = textContent.items.map(item => item.str).join(' ');
-                            
-                            // Extract data using regex - adjust pattern based on your PDF format
-                            const regex = /Room:\s*(\d+)\s*Guest:\s*([^\n]+)\s*Arrival:\s*(\d{4}-\d{2}-\d{2})\s*Departure:\s*(\d{4}-\d{2}-\d{2})/g;
-                            let match;
-
-                            while ((match = regex.exec(text)) !== null) {
-                                arrangements.push({
-                                    roomNumber: match[1],
-                                    guestName: match[2].trim(),
-                                    arrivalDate: match[3],
-                                    departureDate: match[4],
-                                    bicycleType: '',
-                                    bicycleNumber: '',
-                                    status: 'Pending'
-                                });
-                            }
-
-                            if (currentPage < pdf.numPages) {
-                                currentPage++;
-                                processPage(currentPage);
-                            } else {
-                                displayArrangements();
-                                showNotification('PDF processed successfully');
-                            }
-                        });
-                    });
-                }
-                
-                processPage(1);
-            });
-        };
-        reader.readAsArrayBuffer(file);
+function validateFaultyBicycleForm() {
+    if (!document.getElementById('faultyBicycleNumber').value) {
+        showNotification('Please select a bicycle number', 'error');
+        return false;
     }
+
+    if (!document.getElementById('issueDescription').value.trim()) {
+        showNotification('Please provide an issue description', 'error');
+        return false;
+    }
+
+    return true;
 }
 
-</script>
-<script>
-// Search Functions
+// Search and Filter Functions
 function searchByBicycle() {
     const searchTerm = document.getElementById('bicycleSearch').value.toLowerCase();
     if (!searchTerm) {
         showNotification('Please enter a bicycle number', 'error');
         return;
     }
+    
     const filtered = records.filter(record => 
         record.bicycleNumber.toLowerCase().includes(searchTerm)
     );
+    
+    if (filtered.length === 0) {
+        showNotification('No matching records found', 'info');
+    }
+    
     displayRecords(filtered);
 }
 
@@ -1006,9 +1210,15 @@ function searchByRoom() {
         showNotification('Please enter a room number', 'error');
         return;
     }
+    
     const filtered = records.filter(record => 
         record.roomNumber.toLowerCase().includes(searchTerm)
     );
+    
+    if (filtered.length === 0) {
+        showNotification('No matching records found', 'info');
+    }
+    
     displayRecords(filtered);
 }
 
@@ -1018,9 +1228,15 @@ function searchFaultyBicycle() {
         showNotification('Please enter a bicycle number', 'error');
         return;
     }
+    
     const filtered = faultyBicycles.filter(bicycle => 
         bicycle.bicycleNumber.toLowerCase().includes(searchTerm)
     );
+    
+    if (filtered.length === 0) {
+        showNotification('No matching faulty bicycles found', 'info');
+    }
+    
     displayFaultyBicycles(filtered);
 }
 
@@ -1030,283 +1246,148 @@ function filterArrangements() {
         displayArrangements();
         return;
     }
+    
     const filtered = arrangements.filter(arr => arr.arrivalDate === date);
+    
+    if (filtered.length === 0) {
+        showNotification('No arrangements found for selected date', 'info');
+    }
+    
     displayArrangements(filtered);
 }
 
-// Reset Functions
-function resetSearch() {
-    document.getElementById('bicycleSearch').value = '';
-    document.getElementById('roomSearch').value = '';
-    displayRecords();
-}
-
-function resetFaultySearch() {
-    document.getElementById('faultyBicycleSearch').value = '';
-    displayFaultyBicycles();
-}
-
-function resetArrangementFilter() {
-    document.getElementById('arrangementDate').value = '';
-    displayArrangements();
-}
-
-// Action Handler Functions
-function markAsReturned(id) {
-    if (!confirm('Are you sure you want to mark this bicycle as returned?')) return;
-
-    db.collection('bicycleRecords').doc(id).update({
-        status: 'Returned',
-        returnDate: new Date().toISOString()
-    })
-    .then(() => {
-        showNotification('Bicycle marked as returned successfully');
-        loadRecords();
-    })
-    .catch(error => {
-        console.error("Error marking bicycle as returned: ", error);
-        showNotification('Error marking bicycle as returned', 'error');
-    });
-}
-
-function markAsFixed(id) {
-    if (!confirm('Are you sure this bicycle is fixed and ready for use?')) return;
-
-    const bicycle = faultyBicycles.find(b => b.id === id);
-    const history = bicycle.history || [];
-    history.push({
-        date: new Date().toISOString(),
-        action: 'Fixed',
-        notes: 'Bicycle repaired and ready for use'
-    });
-
-    db.collection('faultyBicycles').doc(id).update({
-        status: 'Fixed',
-        fixedDate: new Date().toISOString(),
-        history: history
-    })
-    .then(() => {
-        showNotification('Bicycle marked as fixed successfully');
-        loadFaultyBicycles();
-    })
-    .catch(error => {
-        console.error("Error marking bicycle as fixed: ", error);
-        showNotification('Error marking bicycle as fixed', 'error');
-    });
-}
-
-function deleteRecord(id) {
-    if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
-
-    db.collection('bicycleRecords').doc(id).delete()
-        .then(() => {
-            showNotification('Record deleted successfully');
-            loadRecords();
-        })
-        .catch(error => {
-            console.error("Error deleting record: ", error);
-            showNotification('Error deleting record', 'error');
-        });
-}
-
-function editRecord(index) {
-    const record = records[index];
-    document.getElementById('roomNumber').value = record.roomNumber;
-    document.getElementById('guestName').value = record.guestName;
-    document.getElementById('issueDate').value = record.issueDate;
-    document.getElementById('departureDate').value = record.departureDate;
-    document.getElementById('bicycleNumber').value = record.bicycleNumber;
-    document.getElementById('editIndex').value = index;
-}
-
-function viewMaintenanceHistory(id) {
-    const bicycle = faultyBicycles.find(b => b.id === id);
-    if (!bicycle || !bicycle.history) return;
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Maintenance History - ${bicycle.bicycleNumber}</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .history-item {
-                    border-bottom: 1px solid #ddd;
-                    padding: 15px 0;
-                    margin-bottom: 10px;
-                }
-                .date { color: #666; }
-                .action { font-weight: bold; color: #4CAF50; }
-            </style>
-        </head>
-        <body>
-            <h2>Maintenance History - ${bicycle.bicycleNumber}</h2>
-            ${bicycle.history.map(record => `
-                <div class="history-item">
-                    <div class="date">${formatDate(record.date)}</div>
-                    <div class="action">${record.action}</div>
-                    ${record.notes ? `<div class="notes">${record.notes}</div>` : ''}
-                </div>
-            `).join('')}
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-}
-
 // Print Functions
-function printDepartures() {
-    const today = new Date().toLocaleDateString();
-    const departingToday = records.filter(record => 
-        record.departureDate === new Date().toISOString().split('T')[0] && 
-        record.status !== 'Returned'
-    );
-
-    printContent(`
-        <h2>Today's Bicycle Departures - ${today}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Room</th>
-                    <th>Guest Name</th>
-                    <th>Bicycle #</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${departingToday.map(record => `
-                    <tr>
-                        <td>${record.roomNumber}</td>
-                        <td>${record.guestName}</td>
-                        <td>${record.bicycleNumber}</td>
-                        <td>${record.status}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `);
-}
-
-function printRecords() {
-    const today = new Date().toLocaleDateString();
-    printContent(`
-        <h2>Active Bicycle Records - ${today}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Room</th>
-                    <th>Guest Name</th>
-                    <th>Issue Date</th>
-                    <th>Departure Date</th>
-                    <th>Bicycle #</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${records.filter(r => r.status !== 'Returned').map(record => `
-                    <tr>
-                        <td>${record.roomNumber}</td>
-                        <td>${record.guestName}</td>
-                        <td>${formatDate(record.issueDate)}</td>
-                        <td>${formatDate(record.departureDate)}</td>
-                        <td>${record.bicycleNumber}</td>
-                        <td>${record.status}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `);
-}
-
-function printArrangements() {
-    const today = new Date().toLocaleDateString();
-    printContent(`
-        <h2>Bicycle Arrangements - ${today}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Room</th>
-                    <th>Guest Name</th>
-                    <th>Arrival</th>
-                    <th>Departure</th>
-                    <th>Bicycle</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${arrangements.map(arr => `
-                    <tr>
-                        <td>${arr.roomNumber}</td>
-                        <td>${arr.guestName}</td>
-                        <td>${formatDate(arr.arrivalDate)}</td>
-                        <td>${formatDate(arr.departureDate)}</td>
-                        <td>${arr.bicycleNumber || 'Not Assigned'}</td>
-                        <td>${arr.status}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `);
-}
-
-function printContent(content) {
+function printContent(title, content) {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Print</title>
+            <title>${title}</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #4CAF50; color: white; }
+                body { 
+                    font-family: Arial, sans-serif; 
+                    padding: 20px;
+                    line-height: 1.6;
+                }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                    margin-top: 20px;
+                }
+                th, td { 
+                    border: 1px solid #ddd; 
+                    padding: 12px; 
+                    text-align: left;
+                }
+                th { 
+                    background-color: #4CAF50; 
+                    color: white;
+                }
+                .print-header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                }
+                .print-date {
+                    text-align: right;
+                    color: #666;
+                    margin-bottom: 20px;
+                }
+                .print-footer {
+                    margin-top: 30px;
+                    text-align: center;
+                    font-size: 0.9em;
+                    color: #666;
+                }
                 @media print {
-                    body { padding: 0; }
-                    button { display: none; }
+                    .no-print { display: none; }
                 }
             </style>
         </head>
         <body>
+            <div class="print-header">
+                <h1>${title}</h1>
+                <div class="print-date">Generated: ${new Date().toLocaleString()}</div>
+            </div>
             ${content}
-            <button onclick="window.print()" style="margin-top: 20px;">Print</button>
+            <div class="print-footer">
+                Hotel Bicycle Management System
+            </div>
+            <div class="no-print" style="margin-top: 20px; text-align: center;">
+                <button onclick="window.print()">Print</button>
+            </div>
         </body>
         </html>
     `);
     printWindow.document.close();
 }
 
-// Initialization
-document.addEventListener('DOMContentLoaded', function() {
-    // Set default dates
-    document.getElementById('issueDate').valueAsDate = new Date();
-    document.getElementById('arrangementDate').valueAsDate = new Date();
-
-    // Initialize data
-    loadRecords();
-    loadFaultyBicycles();
-    
-    // Set up real-time updates
-    db.collection('bicycleRecords').onSnapshot((snapshot) => {
-        records = [];
-        snapshot.forEach((doc) => {
-            records.push({ id: doc.id, ...doc.data() });
-        });
-        displayRecords();
-        displayTodayDepartures();
-        updateBicycleInventory();
-    });
-
-    db.collection('faultyBicycles').onSnapshot((snapshot) => {
-        faultyBicycles = [];
-        snapshot.forEach((doc) => {
-            faultyBicycles.push({ id: doc.id, ...doc.data() });
-        });
-        displayFaultyBicycles();
-        updateBicycleInventory();
-    });
+// Event Listeners and Initialization
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Initialize Firebase collections
+        await initializeFirebaseCollections();
+        
+        // Set default dates
+        document.getElementById('issueDate').valueAsDate = new Date();
+        document.getElementById('arrangementDate').valueAsDate = new Date();
+        
+        // Load initial data
+        await loadAllData();
+        
+        // Set up real-time listeners
+        setupRealTimeListeners();
+        
+        showNotification('System initialized successfully', 'info');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('Error initializing system', 'error');
+    }
 });
+
+function setupRealTimeListeners() {
+    // Listen for bicycle records changes
+    db.collection('bicycleRecords')
+        .orderBy('timestamp', 'desc')
+        .onSnapshot((snapshot) => {
+            records = [];
+            snapshot.forEach((doc) => {
+                records.push({ id: doc.id, ...doc.data() });
+            });
+            displayRecords();
+            displayTodayDepartures();
+            updateBicycleInventory();
+        });
+
+    // Listen for faulty bicycles changes
+    db.collection('faultyBicycles')
+        .where('status', '!=', 'Fixed')
+        .onSnapshot((snapshot) => {
+            faultyBicycles = [];
+            snapshot.forEach((doc) => {
+                faultyBicycles.push({ id: doc.id, ...doc.data() });
+            });
+            displayFaultyBicycles();
+            updateBicycleInventory();
+        });
+
+    // Listen for arrangements changes
+    db.collection('arrangements')
+        .orderBy('arrivalDate')
+        .onSnapshot((snapshot) => {
+            arrangements = [];
+            snapshot.forEach((doc) => {
+                arrangements.push({ id: doc.id, ...doc.data() });
+            });
+            displayArrangements();
+            updateBicycleInventory();
+        });
+}
+
+// Initialize the system
+window.onload = function() {
+    showNotification('Loading system...', 'info');
+};
 </script>
 </body>
 </html>
