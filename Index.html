@@ -1073,6 +1073,190 @@ function printFaultyBicycles() {
         });
         displayFaultyBicycles();
     });
+    // Enhanced Bicycle Form with Validation
+function enhancedBicycleForm() {
+    const form = document.getElementById('bicycleForm');
+    
+    // Add validation for dates
+    function validateDates() {
+        const issueDate = new Date(document.getElementById('issueDate').value);
+        const departureDate = new Date(document.getElementById('departureDate').value);
+        
+        if (departureDate < issueDate) {
+            showNotification('Departure date cannot be earlier than issue date', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    // Add bicycle availability check
+    function checkBicycleAvailability(bicycleNumber) {
+        // Check if bicycle is already issued
+        const isIssued = records.some(record => 
+            record.bicycleNumber === bicycleNumber && 
+            record.status !== 'Returned'
+        );
+
+        // Check if bicycle is under maintenance
+        const isFaulty = faultyBicycles.some(b => 
+            b.bicycleNumber === bicycleNumber && 
+            b.status !== 'Fixed'
+        );
+
+        return !isIssued && !isFaulty;
+    }
+
+    // Enhanced form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!validateDates()) {
+            return;
+        }
+
+        const bicycleNumber = document.getElementById('bicycleNumber').value;
+        
+        if (!checkBicycleAvailability(bicycleNumber)) {
+            showNotification('This bicycle is not available', 'error');
+            return;
+        }
+
+        const record = {
+            roomNumber: document.getElementById('roomNumber').value,
+            guestName: document.getElementById('guestName').value,
+            issueDate: document.getElementById('issueDate').value,
+            departureDate: document.getElementById('departureDate').value,
+            bicycleNumber: bicycleNumber,
+            status: 'Active',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        const editIndex = document.getElementById('editIndex').value;
+
+        if (editIndex !== '') {
+            updateRecord(record, editIndex);
+        } else {
+            addRecord(record);
+        }
+    });
+}
+
+// Enhanced Faulty Bicycle Reporting
+function enhancedFaultyBicycleForm() {
+    const faultyForm = document.getElementById('faultyBicycleForm');
+
+    function validateRepairTime() {
+        const repairTime = document.getElementById('estimatedRepairTime').value;
+        if (repairTime < 1) {
+            showNotification('Repair time must be at least 1 day', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    faultyForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!validateRepairTime()) {
+            return;
+        }
+
+        const faultyBicycle = {
+            bicycleNumber: document.getElementById('faultyBicycleNumber').value,
+            issueDescription: document.getElementById('issueDescription').value,
+            priority: document.getElementById('priority').value,
+            estimatedRepairTime: document.getElementById('estimatedRepairTime').value,
+            maintenanceNotes: document.getElementById('maintenanceNotes').value,
+            status: 'Under Repair',
+            reportedDate: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            history: [{
+                date: new Date().toISOString(),
+                action: 'Reported',
+                notes: document.getElementById('maintenanceNotes').value,
+                priority: document.getElementById('priority').value
+            }],
+            notificationSent: false
+        };
+
+        const editIndex = document.getElementById('faultyEditIndex').value;
+
+        if (editIndex !== '') {
+            updateFaultyBicycle(faultyBicycle, editIndex);
+        } else {
+            addFaultyBicycle(faultyBicycle);
+        }
+    });
+}
+
+// Maintenance Team Notification System
+function notifyMaintenanceTeam(bicycle) {
+    // In a real implementation, this would integrate with your notification system
+    console.log(`Maintenance Alert: Bicycle ${bicycle.bicycleNumber} reported faulty`);
+    console.log(`Priority: ${bicycle.priority}`);
+    console.log(`Issue: ${bicycle.issueDescription}`);
+    
+    // Update notification status in database
+    db.collection('faultyBicycles')
+        .doc(bicycle.id)
+        .update({ notificationSent: true })
+        .then(() => {
+            showNotification('Maintenance team notified');
+        })
+        .catch((error) => {
+            console.error("Error sending notification: ", error);
+            showNotification('Error notifying maintenance team', 'error');
+        });
+}
+
+// Enhanced Bicycle Status Management
+function enhancedBicycleStatus() {
+    function updateBicycleStatus(bicycleNumber, status) {
+        // Update in Firestore
+        db.collection('bicycleInventory')
+            .where('bicycleNumber', '==', bicycleNumber)
+            .get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    doc.ref.update({ status: status });
+                });
+            })
+            .catch((error) => {
+                console.error("Error updating bicycle status: ", error);
+                showNotification('Error updating bicycle status', 'error');
+            });
+    }
+
+    // Add event listeners for status changes
+    document.querySelectorAll('.status-change-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const bicycleNumber = this.dataset.bicycle;
+            const newStatus = this.dataset.status;
+            updateBicycleStatus(bicycleNumber, newStatus);
+        });
+    });
+}
+
+// Initialize Enhanced Features
+function initializeEnhancedFeatures() {
+    enhancedBicycleForm();
+    enhancedFaultyBicycleForm();
+    enhancedBicycleStatus();
+
+    // Set up real-time listeners for maintenance notifications
+    db.collection('faultyBicycles')
+        .where('notificationSent', '==', false)
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    notifyMaintenanceTeam(change.doc.data());
+                }
+            });
+        });
+}
+
+// Call initialization when document is ready
+document.addEventListener('DOMContentLoaded', initializeEnhancedFeatures);
 </script>
 </body>
 </html>
